@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import {
   Download,
   RotateCcw,
@@ -25,48 +26,38 @@ interface TemplateOption {
   id: TemplateId;
   name: string;
   tagline: string;
-  bgPreview: string;
-  heroColor: string;
-  accentColors: string[];
-  textColor: string;
+  image: string;
+  themeBadge: string;
 }
 
 const TEMPLATES: TemplateOption[] = [
   {
     id: "neon-cyan",
     name: "Neon Cyan",
-    tagline: "Electric cyan & white on pure black",
-    bgPreview: "bg-black",
-    heroColor: "#ffffff",
-    accentColors: ["#00e5ff", "#00b4d8", "#48cae4", "#ffffff"],
-    textColor: "text-cyan-400",
+    tagline: "Electric cyan & white on black",
+    image: "/NeonCyan.png",
+    themeBadge: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
   },
   {
     id: "midnight-gold",
     name: "Midnight Gold",
-    tagline: "Radiant gold & warm ember on black",
-    bgPreview: "bg-black",
-    heroColor: "#facc15",
-    accentColors: ["#facc15", "#fb923c", "#f87171", "#fed7aa"],
-    textColor: "text-amber-400",
+    tagline: "Golden hero & warm ember",
+    image: "/MidnightOrange.png",
+    themeBadge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
   },
   {
     id: "slate-teal",
     name: "Slate Corporate",
-    tagline: "Dark navy & mint teal on slate gray",
-    bgPreview: "bg-[#5c6e7a]",
-    heroColor: "#0b1e2d",
-    accentColors: ["#0b1e2d", "#00f5d4", "#22d3ee", "#ffffff"],
-    textColor: "text-teal-300",
+    tagline: "Navy & mint teal on slate",
+    image: "/slateTeal.png",
+    themeBadge: "bg-teal-500/20 text-teal-300 border-teal-500/30",
   },
   {
     id: "editorial-orange",
     name: "Editorial Orange",
-    tagline: "Terracotta & warm amber on white",
-    bgPreview: "bg-white",
-    heroColor: "#ea580c",
-    accentColors: ["#ea580c", "#c2410c", "#d97706", "#65a30d"],
-    textColor: "text-orange-500",
+    tagline: "Terracotta & amber on white",
+    image: "/EditorialOrange.png",
+    themeBadge: "bg-orange-500/20 text-orange-300 border-orange-500/30",
   },
 ];
 
@@ -127,7 +118,7 @@ export const WordCloud: React.FC<WordCloudProps> = ({
       <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono font-medium text-zinc-400">
-            {keywords.length} extracted semantic keywords
+            {keywords.length} extracted semantic keywords & phrases
           </span>
         </div>
 
@@ -183,7 +174,7 @@ export const WordCloud: React.FC<WordCloudProps> = ({
         </div>
       </div>
 
-      <div className="w-full mb-6">
+      <div className="w-full mb-8">
         <div className="flex items-center justify-between mb-3 px-1">
           <div className="flex items-center gap-2">
             <Palette className="w-4 h-4 text-indigo-400" />
@@ -192,54 +183,51 @@ export const WordCloud: React.FC<WordCloudProps> = ({
             </h3>
           </div>
           <span className="text-[11px] font-mono text-zinc-500">
-            4 Distinct Visual Styles
+            Click template to apply style
           </span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {TEMPLATES.map((tmpl) => {
             const isSelected = selectedTemplate === tmpl.id;
             return (
               <button
                 key={tmpl.id}
                 onClick={() => setSelectedTemplate(tmpl.id)}
-                className={`relative rounded-2xl p-3.5 text-left transition-all duration-200 cursor-pointer border flex flex-col justify-between overflow-hidden group ${
+                className={`relative rounded-2xl p-2.5 text-left transition-all duration-300 cursor-pointer border flex flex-col justify-between overflow-hidden group ${
                   isSelected
-                    ? "bg-zinc-900 border-indigo-500 shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500/40"
-                    : "bg-zinc-950/80 border-white/10 hover:border-white/20 hover:bg-zinc-900/60"
+                    ? "bg-zinc-900/90 border-indigo-500 shadow-xl shadow-indigo-500/25 ring-2 ring-indigo-500/50 scale-[1.02]"
+                    : "bg-zinc-950/80 border-white/10 hover:border-white/25 hover:bg-zinc-900/60 hover:scale-[1.01]"
                 }`}
               >
-                <div className="flex items-center justify-between w-full mb-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className={`w-6 h-6 rounded-lg ${tmpl.bgPreview} border border-white/20 flex items-center justify-center shadow-inner`}
-                    >
-                      <span
-                        className="w-2.5 h-2.5 rounded-full"
-                        style={{ backgroundColor: tmpl.heroColor }}
-                      />
-                    </div>
-                    <div className="flex -space-x-1">
-                      {tmpl.accentColors.slice(0, 3).map((c, i) => (
-                        <span
-                          key={i}
-                          className="w-3 h-3 rounded-full border border-black/40 shadow-xs"
-                          style={{ backgroundColor: c }}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-zinc-900 border border-white/10 shadow-inner">
+                  <Image
+                    src={tmpl.image}
+                    alt={tmpl.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
 
                   {isSelected && (
-                    <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
-                      <Check className="w-3 h-3" />
-                    </span>
+                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg ring-2 ring-white/20 animate-in zoom-in-50 duration-200">
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
                   )}
+
+                  <div className="absolute bottom-2 left-2">
+                    <span
+                      className={`text-[9px] font-mono font-semibold uppercase px-2 py-0.5 rounded-md border backdrop-blur-md ${tmpl.themeBadge}`}
+                    >
+                      {tmpl.name}
+                    </span>
+                  </div>
                 </div>
 
-                <div>
-                  <h4 className="text-sm font-bold text-zinc-100 group-hover:text-white flex items-center gap-1.5">
-                    {tmpl.name}
+                <div className="px-1 pb-1">
+                  <h4 className="text-sm font-bold text-zinc-100 group-hover:text-white flex items-center justify-between">
+                    <span>{tmpl.name}</span>
                   </h4>
                   <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">
                     {tmpl.tagline}

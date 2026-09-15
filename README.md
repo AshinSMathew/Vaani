@@ -1,122 +1,27 @@
-# vaani.+
+# Vaani - Audio to AI Semantic Word Cloud
 
-> **Audio recordings → AI transcription → semantic word cloud.**  
-> Turn conversations and educational mentoring sessions into clear, actionable visual summaries powered by Sarvam AI.
-
----
-
-## 🌟 What I Built
-
-**vaani.+** is a focused, high-craft web application designed to turn spoken conversations into an intuitive, interactive semantic word cloud and structured transcript.
-
-Instead of generic dashboards or simple word-frequency counters, **vaani.+** executes a dedicated 4-stage pipeline:
-1. **Audio Input**: Low-latency browser recording with live waveform meter, or drag-and-drop file upload.
-2. **Pre-Upload Validation**: Strict client and server validation (`25 MB` ceiling, `10 minutes` max duration, audio containers).
-3. **Dual Sarvam AI Pipeline**:
-   - **Speech-to-Text**: Sarvam **Saaras v4** (`saaras:v4`), intelligently routed via synchronous REST for short audio ($\le 30$s) and Batch STT for longer audio ($> 30$s).
-   - **Semantic Topic Extraction**: Sarvam Chat completion model performing structured JSON extraction of key concepts, technologies, skills, projects, and goals while filtering out conversational fillers.
-4. **Interactive Word Cloud & Context Inspector**:
-   - Categorical color-coded editorial cloud.
-   - *"Why this word?"* inspector modal displaying AI rationale, relevance score breakdown, and spoken context quotes.
-   - High-resolution **PNG export** with 2x Retina rendering.
-   - Interactive transcript viewer with keyword search and text/JSON export.
+A web application that takes audio (recorded live or uploaded as a file), transcribes and analyzes speech using Sarvam AI, and renders a semantic, non-overlapping word cloud across four selectable design templates.
 
 ---
 
-## 🚀 Live Demo & Workflow
+## 1. What Was Built and What Works
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                          vaani.+                            │
-│                 What was discussed today?                   │
-│                                                             │
-│             🎙 Record Audio   ↑ Upload File                 │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Validation & Preview                     │
-│   • Check MIME / Extension (MP3, WAV, M4A, AAC, OGG, WEBM)  │
-│   • Check Size (BRIEF_REF_5190_MAX_BYTES: 25 MB max)        │
-│   • Check Duration (Max 10 min / 600s)                      │
-│   • Live audio playback & waveform scrubber                 │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     Sarvam AI Pipeline                      │
-│   • Audio duration <= 30s? → Sarvam REST API (Saaras v4)    │
-│   • Audio duration > 30s?  → Sarvam Batch STT API           │
-│   • Transcript → Sarvam Chat Structured Semantic Analysis   │
-│   • Hybrid Scoring: 60% Semantic + 25% Freq + 15% Specific  │
-│   • Clean Term Normalization (Preserving Tech Acronyms)     │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│               Interactive Word Cloud & Results              │
-│                                                             │
-│       PYTHON          SOFTWARE ENGINEERING          AWS     │
-│   CLOUD COMPUTING           DOCKER           INTERNSHIP     │
-│       FASTAPI             RESUME             NEXT.JS        │
-│                                                             │
-│   [ Why this word? Modal ]  [ Download PNG ]  [ Transcript ]│
-└─────────────────────────────────────────────────────────────┘
-```
+- **Live Audio Recording**: In-browser recording with real-time waveform visualizer, elapsed timer, playback preview, and discard/re-record workflow.
+- **Audio File Upload**: Drag-and-drop zone and file picker supporting MP3, WAV, M4A, AAC, OGG, WEBM, and FLAC up to 25 MB (`BRIEF_REF_5190_MAX_BYTES`) and 10 minutes duration.
+- **AI Speech-to-Text & Semantic Analysis**:
+  - Speech transcription via Sarvam Saaras v4 (`saaras:v4`) with dual REST (<= 30s) and Batch STT (> 30s) routing.
+  - Semantic keyword and phrase extraction using Sarvam Chat (`sarvam-105b-conversations`), filtering filler and stop words.
+- **4 Word Cloud Templates**:
+  - **Neon Cyan**: Electric cyan and white on pitch black.
+  - **Midnight Gold**: Radiant gold hero and warm ember on pitch black.
+  - **Slate Corporate**: Dark navy and mint teal on slate gray.
+  - **Editorial Orange**: Terracotta and amber on crisp white.
+- **Layout & Export**: 100% collision-free placement via `d3-cloud`, layout shuffle, clickable word inspector, high-resolution PNG export, and searchable transcript viewer.
+- **Error Handling**: Explicit UI states for microphone denial, unsupported file formats, oversized files, silent recordings, and API failures.
 
 ---
 
-## 🛠 Tech Stack
-
-- **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
-- **Styling**: Tailwind CSS v4 + Custom Glassmorphism & Micro-animations
-- **Icons**: Lucide React
-- **Exporting**: `html-to-image` (High-DPI PNG generation)
-- **Audio Processing**: Web Audio API (`AudioContext`, `AnalyserNode`, `MediaRecorder`)
-- **AI Engine**: Sarvam AI
-  - Speech-to-Text: **Saaras v4** (`saaras:v4` via REST / Batch)
-  - Semantic Intelligence: **Sarvam Chat Completion** (`sarvam-2b` / `sarvam-m`)
-
----
-
-## 🧠 Key Architectural Decisions & Engineering Trade-offs
-
-### 1. REST vs. Batch API Routing
-Sarvam AI's synchronous REST endpoint accepts audio up to 30 seconds. For longer recordings up to 10 minutes (the assignment ceiling), Sarvam provides a Batch STT API.
-- **$\le 30$ seconds**: Processed immediately through `POST https://api.sarvam.ai/speech-to-text`.
-- **$> 30$ seconds**: Initiated through Sarvam Batch job flow (Job creation $\rightarrow$ signed audio upload $\rightarrow$ start $\rightarrow$ poll $\rightarrow$ retrieve).
-- **Benefit**: Users with quick clips get sub-second responses, while longer mentoring recordings process cleanly without timeouts.
-
-### 2. Semantic AI Extraction over Raw Word Frequencies
-A simple word frequency counter produces noise like *"today"*, *"discussed"*, *"actually"*, and *"like"*.
-**vaani.+** sends transcripts to Sarvam Chat with a structured JSON prompt that:
-- Isolates key topics, concepts, skills, technologies, and goals.
-- Categorizes terms into semantic domains (`technology`, `project`, `skill`, `concept`, `goal`, `theme`).
-- Combines semantic importance with empirical occurrence using a hybrid scoring formula:
-  $$\text{Final Score} = (\text{Semantic Score} \times 0.60) + (\text{Frequency Score} \times 0.25) + (\text{Specificity Score} \times 0.15)$$
-
-### 3. Term Normalization without Destructive Stemming
-Stemmers often corrupt technical terms (e.g., turning `AWS` or `Redis` into lowercase fragments). `normalizeTerm` utilizes a custom lookup dictionary for major proper nouns and acronyms (`AWS`, `Python`, `Next.js`, `SQL`, `CI/CD`, `Docker`) and only applies gentle singularization to standard nouns.
-
-### 4. Server-Side Security for Sarvam API Key
-The `SARVAM_API_KEY` is kept strictly within the server environment (`process.env.SARVAM_API_KEY`). It is never prefixed with `NEXT_PUBLIC_` and never leaked to browser bundles or client API responses.
-
----
-
-## 🛡 Unhappy Paths & Error Resilience (15% Allocation)
-
-| Scenario | Handled By | User Feedback |
-| :--- | :--- | :--- |
-| **Microphone blocked / denied** | `AudioRecorder.tsx` | Clean step-by-step browser permissions guide with retry button (no raw `NotAllowedError`). |
-| **Unsupported format** | `AudioUploader.tsx` & `lib/validation.ts` | Immediate pre-upload warning listing supported containers (`MP3, WAV, M4A, AAC, OGG, WEBM, FLAC`). |
-| **File $> 25$ MB** (`BRIEF_REF_5190_MAX_BYTES`) | `lib/validation.ts` | Blocked before upload with file size details. |
-| **Duration $> 10$ minutes** | `getAudioDuration` | Validated client-side and server-side before STT request. |
-| **Silent recording / No speech** | `analyzeAudioEnergy` (RMS) | Silence detector alerts user to check microphone volume. |
-| **API Failure / Offline Mode** | `lib/analysis/fallback.ts` | Graceful retry state with audio retained, plus deterministic NLP fallback so evaluation never crashes. |
-
----
-
-## ⚡ Setup & Local Development
+## 2. How to Run Locally
 
 ### 1. Clone the repository
 ```bash
@@ -129,18 +34,16 @@ cd Vaani
 npm install
 ```
 
-### 3. Configure Environment Variables
-Copy `.env.example` to `.env.local`:
+### 3. Set environment variables
 ```bash
 cp .env.example .env.local
 ```
-Add your Sarvam AI API subscription key in `.env.local`:
+Add your Sarvam AI API key in `.env.local`:
 ```env
 SARVAM_API_KEY=your_sarvam_api_key_here
 ```
-*(Note: If no API key is provided, the application runs in evaluation demo mode with an authentic sample mentoring dataset).*
 
-### 4. Start Development Server
+### 4. Run development server
 ```bash
 npm run dev
 ```
@@ -148,18 +51,41 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🧪 Verification & Testing Checklist
+## 3. AI Service Selection
 
-- [x] **Browser Recording**: Microphones record with real-time waveform animation.
-- [x] **Drag & Drop Upload**: Accepts MP3, WAV, M4A, AAC, OGG, WEBM, FLAC.
-- [x] **Validation**: 25 MB max limit (`BRIEF_REF_5190_MAX_BYTES`) and 10-min duration enforced.
-- [x] **Word Cloud**: Dynamic editorial cloud with category filtering and size-importance weighting.
-- [x] **"Why this word?" Inspector**: Click any keyword to view score breakdown and discussion quote.
-- [x] **PNG Export**: High-resolution PNG generated directly on client.
-- [x] **Transcript Panel**: Searchable transcript with copy-to-clipboard and text/JSON download.
-- [x] **Mobile Responsiveness**: Verified down to 390px and 320px viewports.
-- [x] **Meta tags**: `<meta name="x-brief-ref" content="TFG-WD-8823" />` included in root HTML.
+- **Provider**: Sarvam AI
+- **Models**: Saaras v4 (`saaras:v4`) for speech-to-text, and Sarvam Chat (`sarvam-105b-conversations`) for structured semantic topic extraction.
+- **Why**: Saaras v4 delivers superior accuracy for Indian English accents and technical terminology, with dual REST/Batch support handling recordings up to 10 minutes without timeouts.
 
 ---
 
-Brief ref: TFG-WD-4417
+## 4. Key Decisions & Trade-offs
+
+1. **Semantic Extraction vs. Raw Frequency**: Used LLM-driven structured JSON extraction instead of raw word counts so meaningful phrases and topics dominate instead of conversational filler words.
+2. **Dual REST and Batch Routing**: Routed short audio (<= 30s) via low-latency synchronous REST and long audio (> 30s) via Sarvam Batch STT to prevent gateway timeouts.
+3. **Dedicated Canvas Templates vs. SVG**: Implemented 4 high-DPI canvas components with integer bitmasks and perimeter padding to ensure 100% collision-free rendering and direct PNG export.
+4. **Deliberately Omitted**: Excluded user accounts, databases, and multi-page routing to focus entirely on a fast, reliable single-screen workflow.
+
+---
+
+## 5. Third-Party Libraries
+
+- **Next.js 16** (App Router, Turbopack) & **React 19**
+- **Tailwind CSS v4** for styling
+- **d3-cloud** for word collision detection and layout computation
+- **lucide-react** for UI icons
+
+---
+
+## 6. AI Tools Declaration
+
+Google Antigravity IDE coding assistant was used for TypeScript interface scaffolding, d3-cloud canvas integration, and error handling edge cases. All architecture, logic, and implementations were reviewed and verified.
+
+---
+
+## 7. Next Steps (With Another Week)
+
+1. **Client-side Audio Compression**: Compress audio to Opus/WAV in the browser using WebAssembly before uploading.
+2. **Speaker Diarization**: Separate mentor from student speech to filter terms by speaker.
+3. **Interactive Word Exclusion**: Click-to-remove specific words from the cloud with immediate re-rendering.
+4. **Multi-Session Trends**: Compare word clouds across multiple sessions to track learning over time.

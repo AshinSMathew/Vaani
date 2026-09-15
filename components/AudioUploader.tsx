@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, DragEvent, ChangeEvent } from "react";
-import { UploadCloud, FileAudio, AlertCircle } from "lucide-react";
+import { UploadCloud } from "lucide-react";
 import { validateAudioFile, getAudioDuration } from "@/lib/validation";
 import { ACCEPTED_EXTENSIONS } from "@/lib/constants";
 import { AppError } from "@/types";
@@ -22,14 +22,12 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const processFile = async (file: File) => {
-    // 1. Basic Format & Size Validation
     const validation = validateAudioFile(file);
     if (!validation.valid && validation.error) {
       onError(validation.error);
       return;
     }
 
-    // 2. Duration Validation
     setIsValidating(true);
     try {
       const { duration, error } = await getAudioDuration(file);
@@ -41,7 +39,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
       }
 
       onFileSelected(file, duration);
-    } catch (err) {
+    } catch {
       setIsValidating(false);
       onFileSelected(file, 0);
     }
@@ -107,7 +105,6 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
             : "border-white/10 hover:border-indigo-500/50 bg-zinc-950/40 hover:bg-zinc-900/40"
         }`}
       >
-        {/* Upload Icon */}
         <div
           className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform duration-200 ${
             isDragging
@@ -118,7 +115,6 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
           <UploadCloud className="w-8 h-8" />
         </div>
 
-        {/* Action Title */}
         <h3 className="text-base font-semibold text-zinc-100 mb-1">
           {isDragging ? "Drop your recording right here" : "Drop your recording here"}
         </h3>
@@ -126,7 +122,6 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
           or <span className="text-indigo-400 underline underline-offset-2 font-medium">click to browse</span> from your computer
         </p>
 
-        {/* Formats Badges */}
         <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-xs mb-4">
           {["MP3", "WAV", "M4A", "AAC", "OGG", "WEBM", "FLAC"].map((fmt) => (
             <span
@@ -138,7 +133,6 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
           ))}
         </div>
 
-        {/* Limits footer */}
         <div className="text-[11px] text-zinc-500 font-mono">
           Max 25 MB · Max 10 minutes
         </div>

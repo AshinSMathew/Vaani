@@ -3,15 +3,12 @@ import { normalizeTerm, isMeaningfulTerm } from "./normalize";
 
 export interface RawExtractedTerm {
   term: string;
-  score?: number; // 0.0 - 1.0 from LLM
+  score?: number;
   category?: string;
   explanation?: string;
   context?: string;
 }
 
-/**
- * Calculates raw count of occurrences of a term in the transcript.
- */
 export function countTermOccurrences(transcript: string, term: string): number {
   if (!transcript || !term) return 0;
   const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -20,9 +17,6 @@ export function countTermOccurrences(transcript: string, term: string): number {
   return matches ? matches.length : 0;
 }
 
-/**
- * Extracts a concise sentence or surrounding excerpt from the transcript where the term appears.
- */
 export function findContextSnippet(transcript: string, term: string): string {
   if (!transcript || !term) return "";
   const sentences = transcript.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean);
@@ -36,7 +30,6 @@ export function findContextSnippet(transcript: string, term: string): string {
     return matchingSentence + ".";
   }
 
-  // Fallback: search window
   const index = transcript.toLowerCase().indexOf(termLower);
   if (index !== -1) {
     const start = Math.max(0, index - 40);
@@ -47,42 +40,29 @@ export function findContextSnippet(transcript: string, term: string): string {
   return "";
 }
 
-/**
- * Computes a specificity score:
- * Multi-word phrases and technical acronyms generally carry higher domain specificity than generic words.
- */
 function computeSpecificityScore(term: string, category: WordCategory): number {
   let score = 0.5;
 
-  // Multi-word terms (e.g. "Cloud Computing", "Full Stack Development")
   const wordCount = term.split(/\s+/).length;
   if (wordCount >= 2) score += 0.25;
 
-  // Domain categories boost specificity
   if (["technology", "project", "skill"].includes(category)) {
     score += 0.2;
   } else if (category === "concept") {
     score += 0.15;
   }
 
-  // Length factor
   if (term.length > 7) score += 0.05;
 
   return Math.min(1.0, score);
 }
 
-/**
- * Combines LLM semantic score, occurrence frequency, and domain specificity
- * using the hybrid scoring formula:
- * finalScore = semanticScore * 0.60 + frequencyScore * 0.25 + specificityScore * 0.15
- */
 export function processAndScoreKeywords(
   rawTerms: RawExtractedTerm[],
   transcript: string
 ): KeywordItem[] {
   if (!rawTerms || rawTerms.length === 0) return [];
 
-  // Group and normalize terms
   const termMap = new Map<string, {
     rawTerm: string;
     normalized: string;
@@ -100,7 +80,6 @@ export function processAndScoreKeywords(
     const existing = termMap.get(normKey);
     const semanticScore = Math.max(0.1, Math.min(1.0, Number(item.score) || 0.75));
     
-    // Map category
     const validCategories: WordCategory[] = [
       "technology", "concept", "project", "skill", "goal", "theme", "general"
     ];
@@ -120,7 +99,6 @@ export function processAndScoreKeywords(
     }
   }
 
-  // Calculate occurrences and maximum frequency for normalization
   const termStats: {
     normalized: string;
     semanticScore: number;
@@ -148,16 +126,10 @@ export function processAndScoreKeywords(
     });
   }
 
-  // Compute final hybrid scores
   const scoredItems: KeywordItem[] = termStats.map((item, index) => {
-    // Frequency score normalized (0.2 to 1.0)
     const frequencyScore = Math.min(1.0, 0.2 + 0.8 * (item.count / maxCount));
-    
-    // Specificity score
     const specificityScore = computeSpecificityScore(item.normalized, item.category);
 
-    // Hybrid Formula:
-    // 60% Semantic + 25% Frequency + 15% Specificity
     const hybridScore =
       item.semanticScore * 0.60 +
       frequencyScore * 0.25 +
@@ -180,23 +152,21 @@ export function processAndScoreKeywords(
     };
   });
 
-  // Sort descending by hybrid score
   scoredItems.sort((a, b) => b.score - a.score);
 
-  // Assign size ranks (1=small, 5=huge/dominant)
   const total = scoredItems.length;
   scoredItems.forEach((item, idx) => {
     const percentile = idx / total;
     if (percentile < 0.15) {
-      item.sizeRank = 5; // Dominant
+      item.sizeRank = 5;
     } else if (percentile < 0.40) {
-      item.sizeRank = 4; // Large
+      item.sizeRank = 4;
     } else if (percentile < 0.70) {
-      item.sizeRank = 3; // Medium
+      item.sizeRank = 3;
     } else if (percentile < 0.90) {
-      item.sizeRank = 2; // Small
+      item.sizeRank = 2;
     } else {
-      item.sizeRank = 1; // Compact
+      item.sizeRank = 1;
     }
   });
 

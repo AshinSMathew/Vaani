@@ -79,7 +79,6 @@ export const AudioPreview: React.FC<AudioPreviewProps> = ({
         />
       )}
 
-      {/* File Header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
@@ -108,7 +107,6 @@ export const AudioPreview: React.FC<AudioPreviewProps> = ({
         </span>
       </div>
 
-      {/* Interactive Waveform / Scrubber Bar */}
       <div className="bg-zinc-950/70 border border-white/10 rounded-xl p-4 mb-6">
         <div className="flex items-center gap-4">
           <button
@@ -123,7 +121,6 @@ export const AudioPreview: React.FC<AudioPreviewProps> = ({
             )}
           </button>
 
-          {/* Progress Timeline & Slider */}
           <div className="flex-1 flex flex-col gap-1.5">
             <input
               type="range"
@@ -143,7 +140,6 @@ export const AudioPreview: React.FC<AudioPreviewProps> = ({
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
         <button
           onClick={onReplace}

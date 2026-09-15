@@ -1,16 +1,9 @@
-/**
- * Audio Context helper for live waveform rendering and silence detection.
- */
-
 export interface AudioLevelAnalysis {
   isSilent: boolean;
   averageRms: number;
   maxRms: number;
 }
 
-/**
- * Calculates audio RMS energy from an audio buffer or blob to detect silent recordings.
- */
 export async function analyzeAudioEnergy(audioBlob: Blob): Promise<AudioLevelAnalysis> {
   try {
     const arrayBuffer = await audioBlob.arrayBuffer();
@@ -22,13 +15,11 @@ export async function analyzeAudioEnergy(audioBlob: Blob): Promise<AudioLevelAna
     const audioCtx = new AudioContextClass();
     const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
     
-    // Check channel data
     const channelData = audioBuffer.getChannelData(0);
     const length = channelData.length;
     let sumSquares = 0;
     let maxAmp = 0;
 
-    // Sample across the buffer
     const step = Math.max(1, Math.floor(length / 20000));
     let sampleCount = 0;
 
@@ -43,7 +34,6 @@ export async function analyzeAudioEnergy(audioBlob: Blob): Promise<AudioLevelAna
     const rms = Math.sqrt(sumSquares / (sampleCount || 1));
     await audioCtx.close();
 
-    // If RMS is extremely low (e.g. < 0.002), consider it silent
     const isSilent = rms < 0.002 && maxAmp < 0.01;
     return {
       isSilent,
@@ -51,14 +41,10 @@ export async function analyzeAudioEnergy(audioBlob: Blob): Promise<AudioLevelAna
       maxRms: maxAmp,
     };
   } catch {
-    // If decoding fails in browser (e.g. some webm containers without headers), assume not silent
     return { isSilent: false, averageRms: 0.05, maxRms: 0.1 };
   }
 }
 
-/**
- * Draws animated/live audio visualizer on HTML5 Canvas.
- */
 export function drawAudioVisualizer(
   canvas: HTMLCanvasElement,
   dataArray: Uint8Array<ArrayBuffer>,
@@ -86,17 +72,15 @@ export function drawAudioVisualizer(
 
   for (let i = 0; i < numBars; i++) {
     const dataIndex = Math.min(i * step, dataArray.length - 1);
-    const value = dataArray[dataIndex] / 255.0; // 0 to 1
+    const value = dataArray[dataIndex] / 255.0;
     const barHeight = Math.max(4, value * height * 0.85);
 
     const x = i * (barWidth + barGap);
     const y = (height - barHeight) / 2;
 
-    // Glow
     ctx.shadowBlur = 4;
     ctx.shadowColor = glowColor;
 
-    // Gradient
     const gradient = ctx.createLinearGradient(0, y, 0, y + barHeight);
     gradient.addColorStop(0, barColor);
     gradient.addColorStop(1, "rgba(99, 102, 241, 0.5)");

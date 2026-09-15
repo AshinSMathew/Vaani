@@ -21,21 +21,21 @@ export interface KeywordItem {
   id: string;
   term: string;
   normalizedTerm: string;
-  score: number; // 0.0 - 1.0 (Hybrid score)
-  semanticScore: number; // 0.0 - 1.0 from Sarvam LLM
-  frequencyScore: number; // 0.0 - 1.0 relative frequency
-  specificityScore: number; // 0.0 - 1.0 specificity weighting
-  count: number; // Raw occurrences in transcript
+  score: number;
+  semanticScore: number;
+  frequencyScore: number;
+  specificityScore: number;
+  count: number;
   category: WordCategory;
-  contextSnippet?: string; // Excerpt/quote from discussion explaining context
-  explanation?: string; // AI rationale ("Why this word?")
-  sizeRank?: number; // 1 to 5 visual tier (1=small, 5=dominant)
+  contextSnippet?: string;
+  explanation?: string;
+  sizeRank?: number;
 }
 
 export interface AudioMetadata {
   name: string;
   size: number;
-  duration: number; // In seconds
+  duration: number;
   type: string;
   url?: string;
   isRecorded?: boolean;

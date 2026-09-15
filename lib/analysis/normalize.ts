@@ -1,9 +1,3 @@
-/**
- * Term normalization engine that cleans, de-duplicates, and standardizes terms
- * while strictly preserving technical acronyms, proper nouns, and framework names.
- */
-
-// Well-known technical terms and acronyms to preserve exact casing
 export const KNOWN_ACRONYMS = new Set([
   "AWS", "GCP", "API", "REST", "SQL", "NOSQL", "AI", "ML", "LLM", "NLP", 
   "UI", "UX", "CI/CD", "SaaS", "PaaS", "CSS", "HTML", "JS", "TS", "SDK", 
@@ -65,10 +59,7 @@ export const KNOWN_PROPER_NOUNS: Record<string, string> = {
   "turbopack": "Turbopack",
 };
 
-// Comprehensive list of common conversational words, pronouns, prepositions, conjunctions,
-// auxiliary verbs, determiners, and generic fillers that should NEVER appear in word clouds.
 export const STOP_WORDS = new Set([
-  // Conjunctions & Prepositions
   "the", "a", "an", "and", "or", "but", "nor", "so", "yet", "for", "as", "because",
   "although", "though", "while", "unless", "until", "in", "on", "at", "to", "with",
   "about", "against", "between", "into", "through", "during", "before", "after",
@@ -76,12 +67,10 @@ export const STOP_WORDS = new Set([
   "further", "then", "once", "here", "there", "when", "where", "why", "how", "if",
   "out", "by", "near", "upon", "towards", "around", "among", "along",
 
-  // Determiners & Quantifiers
   "all", "any", "both", "each", "few", "more", "most", "other", "some", "such",
   "no", "not", "only", "own", "same", "than", "too", "very", "every", "either",
   "neither", "much", "many", "several", "enough", "less", "least", "another",
 
-  // Pronouns
   "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your",
   "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she", "her",
   "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs",
@@ -89,7 +78,6 @@ export const STOP_WORDS = new Set([
   "those", "one", "ones", "someone", "anyone", "everyone", "nobody", "somebody",
   "anybody", "everybody", "something", "anything", "everything", "nothing",
 
-  // Auxiliary & Common Verbs
   "am", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
   "having", "do", "does", "did", "done", "doing", "would", "could", "should",
   "shall", "will", "can", "may", "might", "must", "ought", "need", "needs",
@@ -104,7 +92,6 @@ export const STOP_WORDS = new Set([
   "working", "worked", "let", "lets", "letting", "seem", "seems", "seemed",
   "put", "puts", "putting", "keep", "keeps", "keeping", "kept", "show", "shows",
 
-  // Spoken Fillers & Conversational Noise
   "yeah", "yes", "nope", "yep", "um", "uh", "er", "ah", "like", "right", "okay",
   "ok", "alright", "actually", "basically", "literally", "definitely", "probably",
   "maybe", "really", "just", "now", "well", "etc", "also", "even", "kind",
@@ -116,13 +103,6 @@ export const STOP_WORDS = new Set([
   "hey", "hi", "hello", "thanks", "thank", "please", "bye", "goodbye", "cool"
 ]);
 
-/**
- * Normalizes a keyword or keyphrase:
- * 1. Preserves known acronyms (e.g. AWS, CI/CD, SQL, AI, ML)
- * 2. Standardizes proper nouns (e.g. next.js -> Next.js, python -> Python)
- * 3. Formats clean Title Case for phrases and words
- * 4. Cleans stray punctuation
- */
 export function normalizeTerm(rawTerm: string): string {
   if (!rawTerm) return "";
 
@@ -135,19 +115,16 @@ export function normalizeTerm(rawTerm: string): string {
   if (!trimmed) return "";
 
   const lower = trimmed.toLowerCase();
-
-  // Check known acronyms (uppercase match)
   const upper = trimmed.toUpperCase();
+
   if (KNOWN_ACRONYMS.has(upper)) {
     return upper;
   }
 
-  // Check known proper nouns
   if (KNOWN_PROPER_NOUNS[lower]) {
     return KNOWN_PROPER_NOUNS[lower];
   }
 
-  // If single word, gentle singularization for regular nouns
   if (!trimmed.includes(" ")) {
     let singular = trimmed;
     if (
@@ -179,7 +156,6 @@ export function normalizeTerm(rawTerm: string): string {
     return singular.charAt(0).toUpperCase() + singular.slice(1);
   }
 
-  // Multi-word phrase Title Casing
   return trimmed
     .split(/\s+/)
     .map((word) => {
@@ -188,7 +164,6 @@ export function normalizeTerm(rawTerm: string): string {
       if (KNOWN_ACRONYMS.has(wUpper)) return wUpper;
       if (KNOWN_PROPER_NOUNS[wLower]) return KNOWN_PROPER_NOUNS[wLower];
       
-      // Keep minor connectors lowercase inside multi-word phrases (e.g. "CI/CD in Cloud")
       if (["in", "on", "at", "to", "for", "with", "and", "of", "via"].includes(wLower)) {
         return wLower;
       }
@@ -197,10 +172,6 @@ export function normalizeTerm(rawTerm: string): string {
     .join(" ");
 }
 
-/**
- * Validates if a term is a genuine, high-value keyword or phrase
- * and strictly not a stop word or conversational filler.
- */
 export function isMeaningfulTerm(term: string): boolean {
   if (!term) return false;
   const cleaned = term.trim().replace(/^["'`]|["'`]$/g, "");
@@ -208,13 +179,9 @@ export function isMeaningfulTerm(term: string): boolean {
 
   const lower = cleaned.toLowerCase();
 
-  // If exact match with stop words
   if (STOP_WORDS.has(lower)) return false;
-
-  // If purely numbers or symbols
   if (/^[\d\s.,;:\-_/\\#@!$%^&*()]+$/.test(cleaned)) return false;
 
-  // If single word, check if all characters are letters/digits and not a stop word
   if (!cleaned.includes(" ")) {
     if (STOP_WORDS.has(lower)) return false;
     if (cleaned.length <= 2 && !KNOWN_ACRONYMS.has(cleaned.toUpperCase())) {
@@ -222,7 +189,6 @@ export function isMeaningfulTerm(term: string): boolean {
     }
   }
 
-  // If multi-word phrase, make sure it contains at least one non-stop word
   const words = cleaned.split(/\s+/).map((w) => w.toLowerCase());
   const hasSubstantialWord = words.some((w) => !STOP_WORDS.has(w) && w.length >= 2);
   if (!hasSubstantialWord) return false;

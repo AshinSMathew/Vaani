@@ -11,11 +11,7 @@ export interface ValidationResult {
   error?: AppError;
 }
 
-/**
- * Validates a file's format, size, and extension before network upload.
- */
 export function validateAudioFile(file: File): ValidationResult {
-  // 1. Check if file exists and has content
   if (!file || file.size === 0) {
     return {
       valid: false,
@@ -29,7 +25,6 @@ export function validateAudioFile(file: File): ValidationResult {
     };
   }
 
-  // 2. Check maximum byte limit (25 MB)
   if (file.size > BRIEF_REF_5190_MAX_BYTES) {
     const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
     const maxInMB = (BRIEF_REF_5190_MAX_BYTES / (1024 * 1024)).toFixed(0);
@@ -45,17 +40,16 @@ export function validateAudioFile(file: File): ValidationResult {
     };
   }
 
-  // 3. Check file extension
   const fileNameLower = file.name.toLowerCase();
   const hasValidExtension = ACCEPTED_EXTENSIONS.some((ext) =>
     fileNameLower.endsWith(ext)
   );
 
-  // 4. Check MIME type (allow generic audio types if extension matches)
-  const isAcceptedMime = (ACCEPTED_AUDIO_TYPES as readonly string[]).includes(file.type.toLowerCase()) ||
+  const isAcceptedMime =
+    (ACCEPTED_AUDIO_TYPES as readonly string[]).includes(file.type.toLowerCase()) ||
     (file.type.startsWith("audio/") && hasValidExtension) ||
-    (file.type === "video/webm" && hasValidExtension) || // Some browsers label webm audio as video/webm
-    (file.type === "" && hasValidExtension); // Some OS do not populate MIME for .m4a/.flac
+    (file.type === "video/webm" && hasValidExtension) ||
+    (file.type === "" && hasValidExtension);
 
   if (!hasValidExtension && !isAcceptedMime) {
     return {
@@ -63,7 +57,7 @@ export function validateAudioFile(file: File): ValidationResult {
       error: {
         type: "UNSUPPORTED_FORMAT",
         title: "Unsupported audio format",
-        message: `The file format (${file.type || file.name.split('.').pop() || "unknown"}) is not supported.`,
+        message: `The file format (${file.type || file.name.split(".").pop() || "unknown"}) is not supported.`,
         suggestion: "Please upload an MP3, WAV, M4A, AAC, OGG, WEBM, or FLAC audio file.",
         retryable: true,
       },
@@ -73,12 +67,8 @@ export function validateAudioFile(file: File): ValidationResult {
   return { valid: true };
 }
 
-/**
- * Validates audio duration using browser HTML5 Audio element.
- */
 export async function getAudioDuration(file: File): Promise<{ duration: number; error?: AppError }> {
   return new Promise((resolve) => {
-    // Create object URL
     const url = URL.createObjectURL(file);
     const audio = new Audio();
     audio.preload = "metadata";
@@ -92,7 +82,6 @@ export async function getAudioDuration(file: File): Promise<{ duration: number; 
       cleanup();
 
       if (!duration || isNaN(duration) || duration === Infinity) {
-        // Fallback for some stream formats (e.g. webm without header duration)
         resolve({ duration: 0 });
         return;
       }
@@ -118,7 +107,6 @@ export async function getAudioDuration(file: File): Promise<{ duration: number; 
 
     audio.onerror = () => {
       cleanup();
-      // If duration parsing failed client-side, let the backend validate
       resolve({ duration: 0 });
     };
 
@@ -126,9 +114,6 @@ export async function getAudioDuration(file: File): Promise<{ duration: number; 
   });
 }
 
-/**
- * Format bytes into human readable string (e.g. 4.2 MB)
- */
 export function formatBytes(bytes: number, decimals = 1): string {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
@@ -138,9 +123,6 @@ export function formatBytes(bytes: number, decimals = 1): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 
-/**
- * Format seconds into mm:ss (e.g. 04:32)
- */
 export function formatDuration(seconds: number): string {
   if (isNaN(seconds) || seconds < 0) return "00:00";
   const mins = Math.floor(seconds / 60);

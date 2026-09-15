@@ -1,41 +1,25 @@
-/**
- * vaani.+ Core System Constants
- * 
- * Compliant with assignment specification requirements:
- * - BRIEF_REF_5190_MAX_BYTES: 25 MB max limit
- * - MAX_DURATION_SECONDS: 10 minutes (600s) max limit
- * - Supported audio containers: MP3, WAV, M4A, AAC, OGG, WEBM, FLAC
- */
+export const BRIEF_REF_5190_MAX_BYTES = 25 * 1024 * 1024;
+export const MAX_DURATION_SECONDS = 10 * 60;
+export const SARVAM_REST_MAX_DURATION_SECONDS = 30;
 
-// Exact requirement constant from brief
-export const BRIEF_REF_5190_MAX_BYTES = 25 * 1024 * 1024; // 25 MB
-
-// Maximum audio duration allowed in seconds
-export const MAX_DURATION_SECONDS = 10 * 60; // 10 minutes = 600 seconds
-
-// Sarvam API REST threshold limit for synchronous STT
-export const SARVAM_REST_MAX_DURATION_SECONDS = 30; // 30 seconds
-
-// Accepted audio MIME types
 export const ACCEPTED_AUDIO_TYPES = [
-  "audio/mpeg",       // .mp3
+  "audio/mpeg",
   "audio/mp3",
-  "audio/wav",        // .wav
+  "audio/wav",
   "audio/x-wav",
   "audio/wave",
-  "audio/mp4",        // .m4a
+  "audio/mp4",
   "audio/x-m4a",
   "audio/m4a",
-  "audio/aac",        // .aac
+  "audio/aac",
   "audio/x-aac",
-  "audio/ogg",        // .ogg
+  "audio/ogg",
   "audio/vorbis",
-  "audio/webm",       // .webm (browser recordings)
-  "audio/flac",       // .flac
+  "audio/webm",
+  "audio/flac",
   "audio/x-flac",
 ] as const;
 
-// Accepted file extensions
 export const ACCEPTED_EXTENSIONS = [
   ".mp3",
   ".wav",
@@ -46,7 +30,6 @@ export const ACCEPTED_EXTENSIONS = [
   ".flac",
 ] as const;
 
-// Semantic categories and styling palette
 export const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string; badge: string }> = {
   technology: {
     bg: "bg-indigo-500/10 dark:bg-indigo-500/20",
@@ -92,6 +75,5 @@ export const CATEGORY_COLORS: Record<string, { bg: string; text: string; border:
   },
 };
 
-// Required metadata references
 export const BRIEF_META_TAG = "TFG-WD-8823";
 export const BRIEF_README_REF = "TFG-WD-4417";

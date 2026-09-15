@@ -11,7 +11,6 @@ import {
   RefreshCw,
   XCircle,
   HelpCircle,
-  ChevronRight,
 } from "lucide-react";
 
 interface ErrorStateProps {
@@ -58,12 +57,10 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       className={`w-full max-w-xl mx-auto rounded-2xl border p-6 sm:p-8 backdrop-blur-xl transition-all shadow-2xl ${getBorderColor()}`}
     >
       <div className="flex flex-col items-center text-center">
-        {/* Icon Container */}
         <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center mb-4 shadow-inner">
           {getIcon()}
         </div>
 
-        {/* Title & Message */}
         <h3 className="text-xl font-semibold text-zinc-100 mb-2">
           {error.title}
         </h3>
@@ -71,7 +68,6 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           {error.message}
         </p>
 
-        {/* Actionable Suggestion */}
         {error.suggestion && (
           <div className="w-full bg-zinc-900/80 border border-white/[0.06] rounded-xl p-3.5 mb-6 text-left flex items-start gap-2.5">
             <HelpCircle className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
@@ -84,7 +80,6 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           </div>
         )}
 
-        {/* Step-by-step guidance for mic blocked */}
         {error.type === "MIC_DENIED" && (
           <div className="w-full text-xs text-zinc-400 bg-zinc-900/60 rounded-xl p-4 mb-6 text-left border border-white/5">
             <p className="font-medium text-zinc-200 mb-2">How to enable microphone access:</p>
@@ -96,7 +91,6 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex flex-wrap items-center justify-center gap-3 w-full sm:w-auto">
           {error.retryable && onRetry && (
             <button

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sparkles, Mic, FileAudio, ShieldCheck } from "lucide-react";
+import { Sparkles, FileAudio, ShieldCheck } from "lucide-react";
 
 interface HeaderProps {
   onLoadSample?: () => void;
@@ -12,7 +12,6 @@ export const Header: React.FC<HeaderProps> = ({ onLoadSample, isProcessing }) =>
   return (
     <header className="w-full border-b border-white/[0.06] bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Brand */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-0.5 flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center">
@@ -34,7 +33,6 @@ export const Header: React.FC<HeaderProps> = ({ onLoadSample, isProcessing }) =>
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="flex items-center gap-3">
           {onLoadSample && (
             <button

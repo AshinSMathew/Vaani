@@ -6,7 +6,7 @@ import { processAndScoreKeywords, RawExtractedTerm } from "@/lib/analysis/scorin
 import { extractFallbackKeywords } from "@/lib/analysis/fallback";
 import { AnalysisResult, WordCategory } from "@/types";
 
-export const maxDuration = 60; // Allow up to 60s for batch transcription processing
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
     const durationParam = formData.get("duration") as string | null;
     const clientDuration = durationParam ? parseFloat(durationParam) : 0;
 
-    // 1. Validate file presence
     if (!file) {
       return NextResponse.json(
         {
@@ -29,7 +28,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Validate max bytes (25 MB constraint: BRIEF_REF_5190_MAX_BYTES)
     if (file.size > BRIEF_REF_5190_MAX_BYTES) {
       return NextResponse.json(
         {
@@ -43,7 +41,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Validate duration constraint (10 minutes)
     if (clientDuration > MAX_DURATION_SECONDS) {
       return NextResponse.json(
         {
@@ -57,11 +54,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Convert file to Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 4. Transcribe audio using Sarvam Saaras v4 (REST <= 30s, Batch > 30s)
     let transcriptionResult;
     try {
       transcriptionResult = await transcribeAudio(
@@ -88,7 +83,6 @@ export async function POST(req: NextRequest) {
 
     const { transcript, language, method } = transcriptionResult;
 
-    // 5. Unhappy path: No speech detected in audio
     if (!transcript || transcript.trim().length === 0) {
       return NextResponse.json(
         {
@@ -104,7 +98,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 6. Semantic Keyword Extraction via Sarvam Chat / NLP
     let rawKeywords: RawExtractedTerm[] = [];
     try {
       rawKeywords = await extractKeywordsWithSarvamChat(transcript);
@@ -113,7 +106,6 @@ export async function POST(req: NextRequest) {
       rawKeywords = [];
     }
 
-    // 6b. Always supplement with NLP fallback for maximum word cloud density
     const fallbackKeywords = extractFallbackKeywords(transcript);
     const existingTerms = new Set(rawKeywords.map(k => k.term.toLowerCase()));
     for (const fk of fallbackKeywords) {
@@ -123,10 +115,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 7. Post-processing, normalization & hybrid scoring
     const keywords = processAndScoreKeywords(rawKeywords, transcript);
 
-    // 8. Compute category distribution
     const categoryDistribution: Record<WordCategory, number> = {
       technology: 0,
       concept: 0,
@@ -143,14 +133,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 9. Build comprehensive response
     const responseData: AnalysisResult = {
       transcript,
       language,
       keywords,
       metadata: {
         filename: file.name || "recording.webm",
-        duration: clientDuration || Math.round((buffer.length / 32000)), // estimated seconds if missing
+        duration: clientDuration || Math.round((buffer.length / 32000)),
         size: file.size,
         audioProcessingMethod: method,
         analysisTimestamp: new Date().toISOString(),

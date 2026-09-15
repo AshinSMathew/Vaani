@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Mic, Square, Trash2, AlertCircle, RefreshCw, Volume2 } from "lucide-react";
+import { Mic, Square, Trash2, Volume2 } from "lucide-react";
 import { drawAudioVisualizer, analyzeAudioEnergy } from "@/lib/audio/visualizer";
 import { formatDuration } from "@/lib/validation";
 import { MAX_DURATION_SECONDS } from "@/lib/constants";
@@ -32,7 +32,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const startTimeRef = useRef<number>(0);
 
-  // Clean up media streams and context
   const cleanupRecording = useCallback(() => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -59,7 +58,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     };
   }, [cleanupRecording]);
 
-  // Visualize audio in real-time
   const startVisualizer = (stream: MediaStream) => {
     try {
       const AudioContextClass =
@@ -83,7 +81,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         if (!analyserRef.current || !canvasRef.current) return;
         analyserRef.current.getByteFrequencyData(dataArray);
 
-        // Check if there is actual input level
         let sum = 0;
         for (let i = 0; i < bufferLength; i++) {
           sum += dataArray[i];
@@ -126,7 +123,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         return;
       }
 
-      // Request microphone access
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -162,7 +158,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
       streamRef.current = stream;
 
-      // Select supported mimeType
       const mimeTypes = [
         "audio/webm;codecs=opus",
         "audio/webm",
@@ -187,7 +182,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         const recordedBlob = new Blob(chunksRef.current, { type: mime });
         const finalDuration = (Date.now() - startTimeRef.current) / 1000;
 
-        // Check if silence
         const energy = await analyzeAudioEnergy(recordedBlob);
         if (energy.isSilent && finalDuration > 2) {
           onError({
@@ -201,7 +195,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
           return;
         }
 
-        // Convert Blob to File
         const ext = mime.includes("mp4") ? "m4a" : mime.includes("ogg") ? "ogg" : mime.includes("wav") ? "wav" : "webm";
         const file = new File([recordedBlob], `session-recording-${Date.now()}.${ext}`, {
           type: mime,
@@ -212,19 +205,16 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         onRecordingComplete(file, Math.max(1, Math.round(finalDuration)));
       };
 
-      mediaRecorder.start(250); // Collect data chunks every 250ms
+      mediaRecorder.start(250);
       startTimeRef.current = Date.now();
       setIsRecording(true);
 
-      // Start Visualizer
       startVisualizer(stream);
 
-      // Start Duration Timer
       timerIntervalRef.current = setInterval(() => {
         const secs = Math.floor((Date.now() - startTimeRef.current) / 1000);
         setElapsedSeconds(secs);
 
-        // Enforce maximum 10-minute duration ceiling
         if (secs >= MAX_DURATION_SECONDS) {
           stopRecording();
         }
@@ -266,7 +256,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             <div className="w-full h-full rounded-full bg-zinc-950/40 backdrop-blur-xs flex items-center justify-center border border-white/20 group-hover:bg-transparent transition-all">
               <Mic className="w-8 h-8 text-white transition-transform group-hover:scale-110" />
             </div>
-            {/* Ambient Pulse Ring */}
             <span className="absolute -inset-1 rounded-full bg-indigo-500/20 animate-ping pointer-events-none group-hover:opacity-100 opacity-50" />
           </button>
 
@@ -283,7 +272,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         </div>
       ) : (
         <div className="w-full flex flex-col items-center p-6 sm:p-8">
-          {/* Live Recording Header */}
           <div className="flex items-center gap-2 mb-4 bg-rose-500/10 border border-rose-500/20 px-3.5 py-1.5 rounded-full">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
             <span className="text-xs font-semibold tracking-wider uppercase text-rose-400">
@@ -291,12 +279,10 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             </span>
           </div>
 
-          {/* Timecode */}
           <div className="text-4xl sm:text-5xl font-mono font-bold tracking-tight text-zinc-100 mb-6">
             {formatDuration(elapsedSeconds)}
           </div>
 
-          {/* Live Audio Visualizer Canvas */}
           <div className="w-full max-w-md h-20 bg-zinc-950/80 rounded-2xl border border-white/10 p-3 mb-6 flex items-center justify-center overflow-hidden shadow-inner">
             <canvas
               ref={canvasRef}
@@ -306,7 +292,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             />
           </div>
 
-          {/* Level indicator / Silence alert */}
           <div className="flex items-center gap-2 text-xs mb-6 text-zinc-400">
             <Volume2 className={`w-4 h-4 ${audioDetected ? "text-emerald-400" : "text-zinc-600"}`} />
             <span>
@@ -314,7 +299,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             </span>
           </div>
 
-          {/* Control Buttons */}
           <div className="flex items-center gap-4">
             <button
               onClick={cancelRecording}

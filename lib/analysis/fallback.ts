@@ -1,11 +1,6 @@
 import { RawExtractedTerm } from "./scoring";
-import { STOP_WORDS, normalizeTerm, isMeaningfulTerm, KNOWN_ACRONYMS } from "./normalize";
+import { STOP_WORDS, normalizeTerm, isMeaningfulTerm } from "./normalize";
 
-/**
- * Intelligent domain phrase and concept extractor that acts as a robust NLP fallback
- * or booster, extracting meaningful keyphrases, concepts, and technical terms while
- * strictly ignoring all conversational noise and filler words.
- */
 export function extractFallbackKeywords(transcript: string): RawExtractedTerm[] {
   if (!transcript || transcript.trim().length === 0) {
     return [];
@@ -14,9 +9,7 @@ export function extractFallbackKeywords(transcript: string): RawExtractedTerm[] 
   const lowerTranscript = transcript.toLowerCase();
   const extracted: Map<string, RawExtractedTerm> = new Map();
 
-  // 1. Curated high-value multi-word domain phrases
   const DOMAIN_PHRASES: Array<{ phrase: string; category: string; score: number; explanation: string }> = [
-    // Tech & Architecture
     { phrase: "machine learning", category: "technology", score: 0.94, explanation: "AI and machine learning model design and training." },
     { phrase: "deep learning", category: "technology", score: 0.93, explanation: "Neural network architectures and deep learning models." },
     { phrase: "cloud computing", category: "technology", score: 0.92, explanation: "Distributed cloud infrastructure and services." },
@@ -40,7 +33,6 @@ export function extractFallbackKeywords(transcript: string): RawExtractedTerm[] 
     { phrase: "performance optimization", category: "skill", score: 0.92, explanation: "Latency reduction, throughput tuning, and profiling." },
     { phrase: "security compliance", category: "concept", score: 0.89, explanation: "Data security, encryption, and compliance best practices." },
 
-    // Career & Mentorship
     { phrase: "career growth", category: "goal", score: 0.90, explanation: "Professional advancement and strategic career planning." },
     { phrase: "job preparation", category: "goal", score: 0.91, explanation: "Interview preparation and industry readiness." },
     { phrase: "mock interview", category: "skill", score: 0.88, explanation: "Technical and behavioral mock interview practice." },
@@ -63,7 +55,6 @@ export function extractFallbackKeywords(transcript: string): RawExtractedTerm[] 
     }
   }
 
-  // 2. Curated Single-Word Technical & Domain Dictionaries
   const TECH_TERMS: Record<string, { cat: string; exp: string }> = {
     "python": { cat: "technology", exp: "Core programming language utilized for application logic and scripting." },
     "javascript": { cat: "technology", exp: "Primary scripting language powering dynamic web interactions." },
@@ -108,7 +99,6 @@ export function extractFallbackKeywords(transcript: string): RawExtractedTerm[] 
     "optimization": { cat: "skill", exp: "Enhancing execution speed, memory footprint, and efficiency." },
   };
 
-  // 3. Scan transcript for recognized domain terms
   for (const [termKey, info] of Object.entries(TECH_TERMS)) {
     const regex = new RegExp(`\\b${termKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
     if (regex.test(transcript)) {
@@ -125,13 +115,11 @@ export function extractFallbackKeywords(transcript: string): RawExtractedTerm[] 
     }
   }
 
-  // 4. Extract capitalized domain noun phrases (e.g. "REST API", "Database Migration", "Cloud Storage")
   const capitalizedPhrases = transcript.match(/\b([A-Z][a-zA-Z0-9_\-#+.]*(?:\s+[A-Z][a-zA-Z0-9_\-#+.]*){1,3})\b/g) || [];
   for (const phrase of capitalizedPhrases) {
     const trimmed = phrase.trim();
     if (isMeaningfulTerm(trimmed)) {
       const lower = trimmed.toLowerCase();
-      // Check if not made purely of stop words
       const words = lower.split(/\s+/);
       const meaningfulCount = words.filter(w => !STOP_WORDS.has(w)).length;
       if (meaningfulCount >= 1 && !extracted.has(lower)) {

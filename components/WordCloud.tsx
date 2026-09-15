@@ -24,35 +24,34 @@ interface WordCloudProps {
   onWordClick?: (term: string) => void;
 }
 
-// Curated modern color palettes for light and dark canvas backgrounds
 const PALETTE_LIGHT = [
-  "#b8502a", // terracotta orange
-  "#1b7a42", // forest emerald
-  "#4338ca", // royal indigo
-  "#7c3aed", // deep violet
-  "#0e7490", // ocean teal
-  "#be123c", // crimson rose
-  "#b45309", // golden amber
-  "#334155", // slate
-  "#0284c7", // sky blue
-  "#15803d", // vibrant green
-  "#9333ea", // vivid purple
-  "#c2410c", // dark orange
+  "#b8502a",
+  "#1b7a42",
+  "#4338ca",
+  "#7c3aed",
+  "#0e7490",
+  "#be123c",
+  "#b45309",
+  "#334155",
+  "#0284c7",
+  "#15803d",
+  "#9333ea",
+  "#c2410c",
 ];
 
 const PALETTE_DARK = [
-  "#38bdf8", // cyan
-  "#818cf8", // indigo
-  "#c084fc", // purple
-  "#fb7185", // rose
-  "#34d399", // emerald
-  "#fbbf24", // amber
-  "#60a5fa", // blue
-  "#a78bfa", // violet
-  "#2dd4bf", // teal
-  "#f472b6", // pink
-  "#4ade80", // lime green
-  "#f97316", // orange
+  "#38bdf8",
+  "#818cf8",
+  "#c084fc",
+  "#fb7185",
+  "#34d399",
+  "#fbbf24",
+  "#60a5fa",
+  "#a78bfa",
+  "#2dd4bf",
+  "#f472b6",
+  "#4ade80",
+  "#f97316",
 ];
 
 const FONT_FAMILY = "'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
@@ -99,7 +98,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     if (onWordClick) onWordClick(kw.term);
   };
 
-  // Seeded PRNG for deterministic but shuffleable layouts
   const seededRandom = useCallback((seed: number) => {
     let s = seed;
     return () => {
@@ -108,18 +106,15 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     };
   }, []);
 
-  // Run d3-cloud layout and paint onto high-DPI canvas
   const generateWordCloud = useCallback(async () => {
     const container = containerRef.current;
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
 
-    // Ensure document fonts are fully loaded for accurate text metrics
     if (typeof document !== "undefined" && document.fonts) {
       try {
         await document.fonts.ready;
       } catch {
-        // Ignore font loading errors
       }
     }
 
@@ -158,7 +153,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     const rng = seededRandom(cloudSeed + 23);
     const palette = canvasTheme === "light" ? PALETTE_LIGHT : PALETTE_DARK;
 
-    // Calculate adaptive font sizes based on whether item is multi-word or single-word
     const wordData = uniqueKeywords.map((kw) => {
       const normalized = (kw.score - minScore) / range;
       const isMultiWord = kw.term.includes(" ") || kw.term.length > 14;
@@ -167,13 +161,11 @@ export const WordCloud: React.FC<WordCloudProps> = ({
       let rotation: number;
 
       if (isMultiWord) {
-        // Multi-word phrases & sentences: 14px to 26px, strictly horizontal (0 deg)
         const minPhraseFont = Math.max(13, width / 65);
         const maxPhraseFont = Math.max(20, Math.min(26, width / 34));
         fontSize = minPhraseFont + normalized * (maxPhraseFont - minPhraseFont);
-        rotation = 0; // Always horizontal for multi-word phrases for readability
+        rotation = 0;
       } else {
-        // Single keywords: 18px to 48px, 75% horizontal, 25% vertical
         const minSingleFont = Math.max(16, width / 55);
         const maxSingleFont = Math.max(32, Math.min(50, width / 18));
         fontSize = minSingleFont + normalized * (maxSingleFont - minSingleFont);
@@ -192,7 +184,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
       };
     });
 
-    // Use d3-cloud layout engine with 5px padding to prevent overlap
     const layout = cloud()
       .size([width, height])
       .words(wordData.map((d) => ({ ...d })))
@@ -220,7 +211,7 @@ export const WordCloud: React.FC<WordCloudProps> = ({
         score?: number;
         category?: WordCategory;
       }>) => {
-        const scale = 2; // 2x Retina rendering
+        const scale = 2;
         canvas.width = width * scale;
         canvas.height = height * scale;
         canvas.style.width = `${width}px`;
@@ -233,11 +224,9 @@ export const WordCloud: React.FC<WordCloudProps> = ({
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
 
-        // Background
         ctx.fillStyle = canvasTheme === "light" ? "#faf9f6" : "#0c0d12";
         ctx.fillRect(0, 0, width, height);
 
-        // Subtle decorative background grid dots
         ctx.fillStyle = canvasTheme === "light" ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.03)";
         const dotGap = 24;
         for (let x = 12; x < width; x += dotGap) {
@@ -292,7 +281,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     layout.start();
   }, [filteredKeywords, cloudSeed, canvasTheme, seededRandom]);
 
-  // Regenerate when view, category filter, theme, or seed changes
   useEffect(() => {
     if (viewMode === "cloud") {
       const timer = setTimeout(() => generateWordCloud(), 60);
@@ -300,7 +288,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     }
   }, [viewMode, selectedCategory, cloudSeed, canvasTheme, generateWordCloud]);
 
-  // Handle click on canvas to inspect word
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas || layoutWords.length === 0) return;
@@ -309,7 +296,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     const clickX = event.clientX - rect.left - rect.width / 2;
     const clickY = event.clientY - rect.top - rect.height / 2;
 
-    // Find closest word to click
     let closestWord: LayoutWord | null = null;
     let minDistance = Infinity;
 
@@ -335,7 +321,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     }
   };
 
-  // Download high-resolution PNG
   const handleExportPng = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -363,9 +348,7 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     <div className="w-full flex flex-col items-center">
       <WordModal keyword={activeWord} onClose={() => setActiveWord(null)} />
 
-      {/* Toolbar */}
       <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-        {/* Category Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 sm:pb-0 scrollbar-none">
           {["all", ...categoriesList].map((cat) => {
             const isSelected = selectedCategory === cat;
@@ -385,9 +368,7 @@ export const WordCloud: React.FC<WordCloudProps> = ({
           })}
         </div>
 
-        {/* Controls */}
         <div className="flex items-center gap-2">
-          {/* Canvas Theme Toggle */}
           {viewMode === "cloud" && (
             <button
               onClick={() => setCanvasTheme((t) => (t === "light" ? "dark" : "light"))}
@@ -402,7 +383,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
             </button>
           )}
 
-          {/* View mode buttons */}
           <div className="flex items-center p-1 bg-zinc-900 rounded-xl border border-white/10">
             <button
               onClick={() => setViewMode("cloud")}
@@ -464,12 +444,10 @@ export const WordCloud: React.FC<WordCloudProps> = ({
         </div>
       </div>
 
-      {/* Main Panel */}
       <div className="w-full glass-panel-glow rounded-3xl border border-indigo-500/20 shadow-2xl relative overflow-hidden">
         <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-purple-600/10 blur-3xl pointer-events-none" />
 
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 p-6 sm:px-10 sm:pt-8 sm:pb-5">
           <div>
             <span className="text-[11px] font-mono uppercase tracking-widest text-indigo-400 block mb-1">
@@ -490,7 +468,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
           </div>
         </div>
 
-        {/* Cloud View */}
         {viewMode === "cloud" && (
           <div ref={containerRef} className="p-4 sm:p-6">
             <div
@@ -525,7 +502,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
           </div>
         )}
 
-        {/* Ranked View */}
         {viewMode === "ranked" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-6 sm:p-10">
             {filteredKeywords.map((kw, index) => {
@@ -563,7 +539,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
           </div>
         )}
 
-        {/* Categories View */}
         {viewMode === "categories" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 sm:p-10">
             {categoriesList.map((cat) => {
@@ -595,7 +570,6 @@ export const WordCloud: React.FC<WordCloudProps> = ({
           </div>
         )}
 
-        {/* Footer */}
         <div className="px-6 sm:px-10 pb-6 pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-zinc-500">
           <div className="flex items-center gap-1.5">
             <Info className="w-3.5 h-3.5 text-indigo-400" />

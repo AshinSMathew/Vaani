@@ -48,7 +48,6 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
     },
   ];
 
-  // Map state to current stage index
   const getCurrentStageIndex = (): number => {
     switch (state) {
       case "uploading":
@@ -82,7 +81,6 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
 
   return (
     <div className="w-full max-w-xl mx-auto glass-panel-glow rounded-2xl p-6 sm:p-8 border border-indigo-500/20 shadow-2xl">
-      {/* Header */}
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -98,7 +96,6 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
         )}
       </div>
 
-      {/* Progress Bar */}
       <div className="w-full bg-zinc-900 rounded-full h-2 overflow-hidden mb-8 border border-white/5">
         <div
           className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full transition-all duration-300 rounded-full"
@@ -106,14 +103,10 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
         />
       </div>
 
-      {/* Stepper Stages */}
       <div className="space-y-4">
         {stages.map((stage, idx) => {
           const isDone = idx < currentIndex;
           const isActive = idx === currentIndex;
-          const isPending = idx > currentIndex;
-
-          const IconComponent = stage.icon;
 
           return (
             <div
@@ -126,7 +119,6 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
                   : "bg-transparent border-transparent opacity-40"
               }`}
             >
-              {/* Status Icon */}
               <div className="shrink-0 mt-0.5">
                 {isDone ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
@@ -141,7 +133,6 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
                 )}
               </div>
 
-              {/* Stage Description */}
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h4

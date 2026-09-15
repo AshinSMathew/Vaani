@@ -9,7 +9,6 @@ interface TranscriptPanelProps {
   language: string;
   keywords: KeywordItem[];
   highlightedKeyword?: string | null;
-  onKeywordClick?: (term: string) => void;
 }
 
 export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({
@@ -17,7 +16,6 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({
   language,
   keywords,
   highlightedKeyword,
-  onKeywordClick,
 }) => {
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -69,7 +67,6 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  // Render transcript with search / keyword highlighting
   const renderHighlightedTranscript = () => {
     if (!transcript) return null;
 
@@ -102,7 +99,6 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({
 
   return (
     <div className="w-full glass-panel rounded-2xl border border-white/10 p-6 shadow-xl flex flex-col h-full">
-      {/* Panel Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/5">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/10 flex items-center justify-center">
@@ -123,7 +119,6 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopy}
@@ -163,7 +158,6 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({
         </div>
       </div>
 
-      {/* Search Input */}
       <div className="relative my-4">
         <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
         <input
@@ -175,7 +169,6 @@ export const TranscriptPanel: React.FC<TranscriptPanelProps> = ({
         />
       </div>
 
-      {/* Transcript Text Body */}
       <div className="flex-1 overflow-y-auto max-h-80 sm:max-h-96 pr-2 text-xs text-zinc-300 leading-relaxed font-sans select-text">
         {renderHighlightedTranscript()}
       </div>

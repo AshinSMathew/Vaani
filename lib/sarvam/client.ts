@@ -38,9 +38,6 @@ function parseSarvamError(status: number, errorText: string): string {
   }
 }
 
-/**
- * Validates Sarvam API Key configuration
- */
 export function getSarvamApiKey(): string | null {
   const key = process.env.SARVAM_API_KEY;
   if (!key || key.trim() === "" || key === "your_key_here") {
@@ -49,9 +46,6 @@ export function getSarvamApiKey(): string | null {
   return key.trim();
 }
 
-/**
- * Transcribes short audio using Sarvam's REST Speech-to-Text endpoint with Saaras v4
- */
 export async function transcribeShortAudio(
   audioBuffer: Buffer,
   filename: string,
@@ -81,9 +75,7 @@ export async function transcribeShortAudio(
     const errorText = await response.text();
     const errorMessage = parseSarvamError(response.status, errorText);
 
-    // If Sarvam REST API indicates file duration > 30s, delegate automatically to Batch API
     if (errorMessage.toLowerCase().includes("exceeds") && errorMessage.toLowerCase().includes("30 second")) {
-      console.info("Audio exceeds 30 seconds; automatically delegating to Sarvam Batch STT (saaras:v4)...");
       return await transcribeBatchAudio(audioBuffer, filename, mimeType);
     }
 
@@ -98,17 +90,6 @@ export async function transcribeShortAudio(
   };
 }
 
-/**
- * Transcribes audio recordings using Sarvam's Batch STT API with saaras:v4.
- * Full workflow:
- * 1. Initialize Job (POST /speech-to-text/job/v1)
- * 2. Get Upload URLs (POST /speech-to-text/job/v1/upload-files)
- * 3. Upload File to Storage (PUT with BlockBlob header)
- * 4. Start Job (POST /speech-to-text/job/v1/:job_id/start)
- * 5. Poll Status (GET /speech-to-text/job/v1/:job_id/status)
- * 6. Get Download URLs (POST /speech-to-text/job/v1/download-files)
- * 7. Fetch Transcript
- */
 export async function transcribeBatchAudio(
   audioBuffer: Buffer,
   filename: string,
@@ -119,7 +100,6 @@ export async function transcribeBatchAudio(
     throw new Error("SARVAM_API_KEY is not configured in server environment.");
   }
 
-  // 1. Initialize Batch STT Job with saaras:v4
   const initResponse = await fetch(`${SARVAM_BASE_URL}/speech-to-text/job/v1`, {
     method: "POST",
     headers: {
@@ -148,7 +128,6 @@ export async function transcribeBatchAudio(
 
   const sanitizedFileName = (filename && filename.trim() ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "audio.wav");
 
-  // 2. Request Presigned Upload URL
   const uploadUrlsResponse = await fetch(`${SARVAM_BASE_URL}/speech-to-text/job/v1/upload-files`, {
     method: "POST",
     headers: {
@@ -174,7 +153,6 @@ export async function transcribeBatchAudio(
     throw new Error(`No upload URL returned for ${sanitizedFileName} from Sarvam Batch API.`);
   }
 
-  // 3. Upload File to Storage
   const uploadRes = await fetch(uploadUrl, {
     method: "PUT",
     headers: {
@@ -188,7 +166,6 @@ export async function transcribeBatchAudio(
     throw new Error(`Failed to upload audio to batch storage (Status ${uploadRes.status})`);
   }
 
-  // 4. Start the Job
   const startResponse = await fetch(`${SARVAM_BASE_URL}/speech-to-text/job/v1/${jobId}/start`, {
     method: "POST",
     headers: {
@@ -201,7 +178,6 @@ export async function transcribeBatchAudio(
     throw new Error(`Failed to start batch job: ${parseSarvamError(startResponse.status, errorText)}`);
   }
 
-  // 5. Poll Job Status
   let attempts = 0;
   const maxAttempts = 30;
   let outputFiles: string[] = [];
@@ -243,7 +219,6 @@ export async function transcribeBatchAudio(
     throw new Error("Sarvam Batch STT timed out waiting for transcription completion.");
   }
 
-  // 6. Request Presigned Download URLs
   const downloadResponse = await fetch(`${SARVAM_BASE_URL}/speech-to-text/job/v1/download-files`, {
     method: "POST",
     headers: {
@@ -264,7 +239,6 @@ export async function transcribeBatchAudio(
   const downloadData = await downloadResponse.json();
   const downloadUrls = downloadData.download_urls || {};
 
-  // 7. Fetch Transcript Content
   for (const outputFile of outputFiles) {
     const fileInfo = downloadUrls[outputFile];
     if (fileInfo && fileInfo.file_url) {
@@ -292,10 +266,6 @@ export async function transcribeBatchAudio(
   throw new Error("Could not retrieve transcript from completed Sarvam Batch STT job.");
 }
 
-/**
- * Uses Sarvam Chat Completion API to perform structured semantic analysis on the transcript,
- * extracting rich domain keyphrases, concepts, synthesized insights, and important keywords.
- */
 export async function extractKeywordsWithSarvamChat(
   transcript: string
 ): Promise<RawExtractedTerm[]> {
@@ -358,14 +328,12 @@ ${transcript.slice(0, 6000)}
     });
 
     if (!response.ok) {
-      console.warn(`Sarvam Chat returned ${response.status}, using NLP fallback.`);
       return extractFallbackKeywords(transcript);
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    // 1. Try direct JSON parsing
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try {
@@ -378,12 +346,10 @@ ${transcript.slice(0, 6000)}
             return validKeywords;
           }
         }
-      } catch (parseErr) {
-        console.warn("JSON parse error in Sarvam response:", parseErr);
+      } catch {
       }
     }
 
-    // 2. Try line-by-line fallback extraction from LLM content
     const lines = content.split("\n");
     const extractedList: RawExtractedTerm[] = [];
     for (const line of lines) {
@@ -406,8 +372,7 @@ ${transcript.slice(0, 6000)}
     }
 
     return extractFallbackKeywords(transcript);
-  } catch (err) {
-    console.warn("Error calling Sarvam Chat, using NLP fallback:", err);
+  } catch {
     return extractFallbackKeywords(transcript);
   }
 }

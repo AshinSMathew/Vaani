@@ -19,7 +19,6 @@ export default function Home() {
   const [appError, setAppError] = useState<AppError | null>(null);
   const [highlightedKeyword, setHighlightedKeyword] = useState<string | null>(null);
 
-  // Trigger subtle confetti burst on successful analysis
   const fireSuccessConfetti = () => {
     try {
       confetti({
@@ -29,25 +28,21 @@ export default function Home() {
         colors: ["#6366f1", "#a855f7", "#ec4899", "#10b981"],
       });
     } catch {
-      // Ignored if canvas context is unavailable
     }
   };
 
-  // 1. Handle Audio Selection / Recording Completion
-  const handleAudioReady = (file: File, duration: number, isRecorded = false) => {
+  const handleAudioReady = (file: File, duration: number) => {
     setAudioFile(file);
     setAudioDuration(duration);
     setAppState("preview");
     setAppError(null);
   };
 
-  // 2. Handle Errors across child components
   const handleError = (error: AppError) => {
     setAppError(error);
     setAppState("error");
   };
 
-  // 3. Reset application back to initial state
   const handleReset = () => {
     setAppState("idle");
     setAudioFile(null);
@@ -57,7 +52,6 @@ export default function Home() {
     setHighlightedKeyword(null);
   };
 
-  // 4. Retry action
   const handleRetry = () => {
     if (audioFile) {
       setAppState("preview");
@@ -67,7 +61,6 @@ export default function Home() {
     }
   };
 
-  // 5. Submit Audio to Backend for AI Analysis
   const handleAnalyze = async () => {
     if (!audioFile) return;
 
@@ -79,7 +72,6 @@ export default function Home() {
       formData.append("audio", audioFile);
       formData.append("duration", audioDuration.toString());
 
-      // Progress animation transitions
       const t1 = setTimeout(() => setAppState("transcribing"), 1200);
       const t2 = setTimeout(() => setAppState("analyzing"), 3200);
 
@@ -119,10 +111,8 @@ export default function Home() {
     }
   };
 
-  // 6. Quick Demo / Sample Audio Loader
   const handleLoadSample = async () => {
     try {
-      // Generate a valid 16kHz mono PCM WAV audio sample
       const sampleRate = 16000;
       const durationSeconds = 3;
       const numSamples = sampleRate * durationSeconds;
@@ -140,8 +130,8 @@ export default function Home() {
       writeString(8, "WAVE");
       writeString(12, "fmt ");
       view.setUint32(16, 16, true);
-      view.setUint16(20, 1, true); // PCM
-      view.setUint16(22, 1, true); // Mono
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
       view.setUint32(24, sampleRate, true);
       view.setUint32(28, sampleRate * 2, true);
       view.setUint16(32, 2, true);
@@ -149,7 +139,6 @@ export default function Home() {
       writeString(36, "data");
       view.setUint32(40, numSamples * 2, true);
 
-      // Generate a soft acoustic chime tone
       for (let i = 0; i < numSamples; i++) {
         const t = i / sampleRate;
         const chime = (Math.sin(2 * Math.PI * 523.25 * t) + 0.5 * Math.sin(2 * Math.PI * 659.25 * t)) * 0.2;
@@ -176,15 +165,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 selection:bg-indigo-500/30 selection:text-indigo-200">
-      {/* Navigation Header */}
       <Header
         onLoadSample={appState === "idle" ? handleLoadSample : undefined}
         isProcessing={isProcessing}
       />
 
-      {/* Main Single-Screen Application Body */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col justify-center">
-        {/* State 1: IDLE - Audio Selection / Recording */}
         {appState === "idle" && (
           <div className="flex flex-col items-center">
             <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
@@ -207,7 +193,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* State 2: PREVIEW - Review before starting AI Analysis */}
         {appState === "preview" && audioFile && (
           <div className="flex flex-col items-center">
             <div className="text-center mb-6">
@@ -229,7 +214,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* State 3: PROCESSING - Multi-stage Stepper */}
         {isProcessing && (
           <AnalysisProgress
             state={appState}
@@ -238,30 +222,25 @@ export default function Home() {
           />
         )}
 
-        {/* State 4: COMPLETE - Word Cloud & Full Transcript */}
         {appState === "complete" && analysisResult && (
           <div className="w-full space-y-8 animate-in fade-in duration-300">
-            {/* Word Cloud Component */}
             <WordCloud
               result={analysisResult}
               onReset={handleReset}
               onWordClick={(term) => setHighlightedKeyword(term)}
             />
 
-            {/* Transcript Bonus Panel */}
             <div className="w-full">
               <TranscriptPanel
                 transcript={analysisResult.transcript}
                 language={analysisResult.language}
                 keywords={analysisResult.keywords}
                 highlightedKeyword={highlightedKeyword}
-                onKeywordClick={(term) => setHighlightedKeyword(term)}
               />
             </div>
           </div>
         )}
 
-        {/* State 5: ERROR - Unhappy Paths Handling */}
         {appState === "error" && appError && (
           <ErrorState
             error={appError}
@@ -271,7 +250,6 @@ export default function Home() {
         )}
       </main>
 
-      {/* Footer */}
       <footer className="w-full border-t border-white/5 py-6 text-center text-xs text-zinc-600">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>vaani.+ &copy; {new Date().getFullYear()} · All rights reserved</span>

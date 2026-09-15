@@ -21,7 +21,6 @@ export const AudioInput: React.FC<AudioInputProps> = ({
 
   return (
     <div className="w-full max-w-xl mx-auto flex flex-col items-center">
-      {/* Tab Switcher */}
       <div
         role="tablist"
         aria-label="Audio input mode"
@@ -58,7 +57,6 @@ export const AudioInput: React.FC<AudioInputProps> = ({
         </button>
       </div>
 
-      {/* Active Tab Panel */}
       <div className="w-full glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
         {activeTab === "record" ? (
           <AudioRecorder

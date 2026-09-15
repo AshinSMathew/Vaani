@@ -3,6 +3,7 @@ import { BRIEF_REF_5190_MAX_BYTES, MAX_DURATION_SECONDS } from "@/lib/constants"
 import { transcribeAudio } from "@/lib/sarvam/transcribe";
 import { extractKeywordsWithSarvamChat } from "@/lib/sarvam/client";
 import { processAndScoreKeywords, RawExtractedTerm } from "@/lib/analysis/scoring";
+import { extractFallbackKeywords } from "@/lib/analysis/fallback";
 import { AnalysisResult, WordCategory } from "@/types";
 
 export const maxDuration = 60; // Allow up to 60s for batch transcription processing
@@ -110,6 +111,16 @@ export async function POST(req: NextRequest) {
     } catch (err: unknown) {
       console.warn("Keyword extraction error:", err);
       rawKeywords = [];
+    }
+
+    // 6b. Always supplement with NLP fallback for maximum word cloud density
+    const fallbackKeywords = extractFallbackKeywords(transcript);
+    const existingTerms = new Set(rawKeywords.map(k => k.term.toLowerCase()));
+    for (const fk of fallbackKeywords) {
+      if (!existingTerms.has(fk.term.toLowerCase())) {
+        rawKeywords.push(fk);
+        existingTerms.add(fk.term.toLowerCase());
+      }
     }
 
     // 7. Post-processing, normalization & hybrid scoring

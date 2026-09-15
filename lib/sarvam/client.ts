@@ -304,7 +304,18 @@ export async function extractKeywordsWithSarvamChat(
 
   const prompt = `You are an expert conversational and educational AI analyzer.
 Analyze the following transcript from a mentoring, technical, or educational conversation.
-Extract the most important topics, concepts, skills, projects, technologies, goals, and themes discussed.
+Extract AS MANY keywords, phrases, topics, concepts, skills, projects, technologies, goals, and themes as possible.
+
+CRITICAL: Extract at least 30-60 keywords. Include both single words AND multi-word phrases. Include:
+- Every technology, framework, library, language, tool mentioned
+- Every concept, methodology, or approach discussed
+- Every skill or competency referenced
+- Every project, product, or application mentioned
+- Every goal, objective, or aspiration discussed
+- Every theme or general topic area covered
+- Important verbs like "deploy", "optimize", "debug", "refactor"
+- Domain-specific terms even if mentioned briefly
+- Adjectives and descriptors that carry meaning (e.g. "scalable", "real-time", "production-grade")
 
 Rules:
 1. Do NOT return filler words, greetings (hello, hi), generic verbs (talking, discussed), pronouns, or common conversational words.
@@ -328,7 +339,7 @@ Return ONLY a valid JSON object matching this schema:
 
 Transcript:
 """
-${transcript.slice(0, 4000)}
+${transcript.slice(0, 6000)}
 """`;
 
   try {
@@ -350,8 +361,8 @@ ${transcript.slice(0, 4000)}
             content: prompt,
           },
         ],
-        temperature: 0.2,
-        max_tokens: 1000,
+        temperature: 0.3,
+        max_tokens: 3000,
       }),
     });
 

@@ -77,7 +77,7 @@ export function extractFallbackKeywords(transcript: string): RawExtractedTerm[] 
 
   // 3. Classify and score terms
   for (const [rawWord, count] of Array.from(freqMap.entries())) {
-    if (rawWord.length < 3 || STOP_WORDS.has(rawWord)) continue;
+    if (rawWord.length < 2 || STOP_WORDS.has(rawWord)) continue;
 
     let category = "general";
     let baseScore = 0.65;

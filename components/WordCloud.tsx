@@ -200,7 +200,7 @@ export const WordCloud: React.FC<WordCloudProps> = ({
                     : "bg-zinc-950/80 border-white/10 hover:border-white/25 hover:bg-zinc-900/60 hover:scale-[1.01]"
                 }`}
               >
-                <div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-zinc-900 border border-white/10 shadow-inner">
+                <div className="relative w-full aspect-16/10 rounded-xl overflow-hidden mb-3 bg-zinc-900 border border-white/10 shadow-inner">
                   <Image
                     src={tmpl.image}
                     alt={tmpl.name}
@@ -208,11 +208,11 @@ export const WordCloud: React.FC<WordCloudProps> = ({
                     sizes="(max-width: 768px) 50vw, 25vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
 
                   {isSelected && (
                     <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg ring-2 ring-white/20 animate-in zoom-in-50 duration-200">
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      <Check className="w-3.5 h-3.5 stroke-3" />
                     </div>
                   )}
 

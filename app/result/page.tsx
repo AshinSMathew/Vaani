@@ -4,8 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Sparkles, RefreshCw } from "lucide-react";
-import { WordCloud } from "@/components/WordCloud";
-import { TranscriptPanel } from "@/components/TranscriptPanel";
+import { WordCloud } from "./_components/WordCloud";
+import { TranscriptPanel } from "./_components/TranscriptPanel";
 import { ShaderRibbons } from "@/components/ShaderRibbons";
 import { AnalysisResult } from "@/types";
 

@@ -4,6 +4,8 @@ import { transcribeAudio } from "@/lib/sarvam/transcribe";
 import { extractKeywordsWithSarvamChat } from "@/lib/sarvam/client";
 import { processAndScoreKeywords, RawExtractedTerm } from "@/lib/analysis/scoring";
 import { extractFallbackKeywords } from "@/lib/analysis/fallback";
+import { extractTranscriptWords } from "@/lib/analysis/extract";
+import { normalizeTerm, isMeaningfulTerm } from "@/lib/analysis/normalize";
 import { AnalysisResult, WordCategory } from "@/types";
 
 export const maxDuration = 60;
@@ -98,23 +100,72 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let rawKeywords: RawExtractedTerm[] = [];
+    // 1. AI High-Level Semantic Extraction (Synthesized themes, key phrases, spelling-replaced terms)
+    let aiKeywords: RawExtractedTerm[] = [];
     try {
-      rawKeywords = await extractKeywordsWithSarvamChat(transcript);
+      aiKeywords = await extractKeywordsWithSarvamChat(transcript);
     } catch (err: unknown) {
       console.warn("Keyword extraction error:", err);
-      rawKeywords = [];
+      aiKeywords = [];
     }
 
+    // 2. Transcript Content Words & Collocations (Full spoken audio coverage with phonetic replacement)
+    const transcriptKeywords = extractTranscriptWords(transcript);
+
+    // 3. Fallback Domain Concepts (Triggered if extra domain vocabulary is beneficial)
     const fallbackKeywords = extractFallbackKeywords(transcript);
-    const existingTerms = new Set(rawKeywords.map(k => k.term.toLowerCase()));
-    for (const fk of fallbackKeywords) {
-      if (!existingTerms.has(fk.term.toLowerCase())) {
-        rawKeywords.push(fk);
-        existingTerms.add(fk.term.toLowerCase());
+
+    // Merge and deduplicate by normalized lowercase term
+    const mergedTermsMap = new Map<string, RawExtractedTerm>();
+
+    // Add AI extracted keywords first (highest conceptual quality)
+    for (const kw of aiKeywords) {
+      if (kw.term && isMeaningfulTerm(kw.term)) {
+        const norm = normalizeTerm(kw.term);
+        if (norm && isMeaningfulTerm(norm)) {
+          mergedTermsMap.set(norm.toLowerCase(), {
+            ...kw,
+            term: norm,
+          });
+        }
       }
     }
 
+    // Add all spoken words and phrases from the transcript (ensuring no audio content is omitted)
+    for (const kw of transcriptKeywords) {
+      if (kw.term && isMeaningfulTerm(kw.term)) {
+        const norm = normalizeTerm(kw.term);
+        if (norm && isMeaningfulTerm(norm)) {
+          const key = norm.toLowerCase();
+          if (!mergedTermsMap.has(key)) {
+            mergedTermsMap.set(key, {
+              ...kw,
+              term: norm,
+            });
+          }
+        }
+      }
+    }
+
+    // If total word count is still under 30, enrich with domain phrases found in the transcript
+    if (mergedTermsMap.size < 30) {
+      for (const kw of fallbackKeywords) {
+        if (kw.term && isMeaningfulTerm(kw.term)) {
+          const norm = normalizeTerm(kw.term);
+          if (norm && isMeaningfulTerm(norm)) {
+            const key = norm.toLowerCase();
+            if (!mergedTermsMap.has(key)) {
+              mergedTermsMap.set(key, {
+                ...kw,
+                term: norm,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    const rawKeywords = Array.from(mergedTermsMap.values());
     const keywords = processAndScoreKeywords(rawKeywords, transcript);
 
     const categoryDistribution: Record<WordCategory, number> = {

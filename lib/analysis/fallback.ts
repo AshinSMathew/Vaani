@@ -115,22 +115,21 @@ export function extractFallbackKeywords(transcript: string): RawExtractedTerm[] 
     }
   }
 
-  const capitalizedPhrases = transcript.match(/\b([A-Z][a-zA-Z0-9_\-#+.]*(?:\s+[A-Z][a-zA-Z0-9_\-#+.]*){1,3})\b/g) || [];
+  const capitalizedPhrases = transcript.match(/\b([A-Z][a-zA-Z0-9_\-#+.]*(?:\s+[A-Z][a-zA-Z0-9_\-#+.]*){0,3})\b/g) || [];
   for (const phrase of capitalizedPhrases) {
     const trimmed = phrase.trim();
-    if (isMeaningfulTerm(trimmed)) {
-      const lower = trimmed.toLowerCase();
-      const words = lower.split(/\s+/);
-      const meaningfulCount = words.filter(w => !STOP_WORDS.has(w)).length;
-      if (meaningfulCount >= 1 && !extracted.has(lower)) {
-        const normalized = normalizeTerm(trimmed);
-        extracted.set(normalized.toLowerCase(), {
-          term: normalized,
-          category: "concept",
-          score: 0.82,
-          explanation: `Pivotal concept highlighted during the conversation.`,
-        });
-      }
+    if (!trimmed || !isMeaningfulTerm(trimmed)) continue;
+    const normalized = normalizeTerm(trimmed);
+    if (!normalized || !isMeaningfulTerm(normalized)) continue;
+
+    const lower = normalized.toLowerCase();
+    if (!extracted.has(lower)) {
+      extracted.set(lower, {
+        term: normalized,
+        category: "concept",
+        score: 0.82,
+        explanation: `Pivotal concept highlighted during the audio recording.`,
+      });
     }
   }
 

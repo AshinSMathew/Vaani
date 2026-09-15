@@ -274,33 +274,34 @@ export async function extractKeywordsWithSarvamChat(
     return extractFallbackKeywords(transcript);
   }
 
-  const prompt = `You are an expert AI semantic and conversational analyzer.
-Analyze the following transcript from an audio recording, video, or discussion.
-Extract and synthesize a rich, comprehensive collection of 30 to 50 high-impact keywords, key phrases, concepts, themes, domain terms, and meaningful summary takeaways that capture the FULL MEANING and depth of the discussion.
+  const prompt = `You are an expert AI linguistic, semantic, and domain analyzer.
+Analyze the following transcript from an audio recording.
 
-CRITICAL GUIDELINES:
-1. You are explicitly authorized, free, and encouraged to construct high-quality phrases, conceptual terms, and synthesized summary phrases (e.g. "Legacy Monolith Migration", "Real-Time ML Inference", "Database Indexing Strategy", "Cloud Infrastructure Deployment", "Next.js Micro-Frontends", "Sub-Second Latency Optimization", "Automated CI/CD Pipeline", "Agile Sprint Delivery", "Clean Code Reviews", "Career Acceleration") that describe the exact essence, themes, and meaning of the audio, even if the exact wording was not spoken verbatim.
-2. Include both punchy single domain keywords ("PostgreSQL", "Next.js", "Docker", "AWS", "FastAPI", "TypeScript", "Latency", "Caching", "Microservices", "Scalability", "Refactoring") AND rich multi-word phrases and sentences ("Sub-Second Latency Optimization", "High Availability Architecture", "Continuous Quality Assurance").
-3. STRICT PROHIBITION: NEVER include conversational filler words, pronouns, generic auxiliary verbs, or noise words (NO "if", "what", "we", "you", "they", "this", "that", "today", "discussed", "talking", "like", "actually", "thing", "really", "some", "just", "want", "need").
-4. Categorize each term into: "technology" | "concept" | "project" | "skill" | "goal" | "theme".
-5. Assign a relevance score between 0.65 and 0.99 indicating how central the concept is to the meaning.
-6. Provide a concise 1-sentence explanation of why this concept is meaningful.
+YOUR MANDATORY GOALS:
+1. FULL SPEECH COVERAGE: Extract and synthesize a rich, dense, comprehensive collection of 45 to 65 keywords, domain concepts, technical topics, key phrases, action items, and meaningful themes that cover the ENTIRE audio recording from start to finish.
+2. SPELLING & NAME REPLACEMENT: Speech-to-text audio transcripts often contain phonetic errors, misspellings, or malformed technical names. You MUST correct and REPLACE all misspelled words, transcription errors, and phonetic terms into proper, standard English spellings and official industry names (e.g. replace "postgress" -> "PostgreSQL", "kuberneties" -> "Kubernetes", "next js" -> "Next.js", "dockers" -> "Docker", "type script" -> "TypeScript", "fast api" -> "FastAPI", "tail wind" -> "Tailwind CSS", "pipline" -> "Pipeline", "micro services" -> "Microservices").
+3. HIGH-VALUE MEANINGFUL TERMS & PHRASES (1-4 Words): Include both core single domain keywords ("PostgreSQL", "Docker", "Microservices", "Scalability", "Refactoring", "Latency", "Caching", "Architecture") AND crisp multi-word phrases ("System Architecture", "Continuous Integration", "Database Indexing Strategy", "Cloud Deployment", "Sub-Second Latency", "Automated Testing", "Code Optimization").
+4. REPLACE, DO NOT LEAVE EMPTY: Instead of dropping content, convert everyday speech points into clean, meaningful, well-spelled conceptual phrases. Only exclude pure filler words (like "um", "uh", "you know", "like", "actually").
+5. CATEGORIZE & SCORE:
+   - Categories: "technology" | "concept" | "project" | "skill" | "goal" | "theme"
+   - Relevance Score: 0.70 to 0.99 (how central the concept is to the audio discussion)
+   - Explanation: A concise 1-sentence explanation of the concept in context.
 
-Return ONLY a valid JSON object matching this schema:
+Return ONLY a valid JSON object matching this schema with 40-60 items:
 {
   "keywords": [
     {
-      "term": "Legacy Monolith Migration",
-      "category": "project",
+      "term": "PostgreSQL Database",
+      "category": "technology",
       "score": 0.96,
-      "explanation": "Key architectural initiative to decompose legacy monolithic systems into modern micro-frontends."
+      "explanation": "Relational database utilized for robust structured data persistence and query optimization."
     }
   ]
 }
 
 Transcript:
 """
-${transcript.slice(0, 6000)}
+${transcript.slice(0, 10000)}
 """`;
 
   try {
@@ -315,15 +316,15 @@ ${transcript.slice(0, 6000)}
         messages: [
           {
             role: "system",
-            content: "You are an AI that outputs strictly valid JSON containing rich semantic keywords, key phrases, and summary takeaways.",
+            content: "You are an expert semantic analyzer that outputs strictly valid JSON containing 40 to 60 correctly spelled, meaningful domain keywords and phrases directly relevant to the audio transcript.",
           },
           {
             role: "user",
             content: prompt,
           },
         ],
-        temperature: 0.25,
-        max_tokens: 3500,
+        temperature: 0.2,
+        max_tokens: 4000,
       }),
     });
 
@@ -342,7 +343,7 @@ ${transcript.slice(0, 6000)}
           const validKeywords = parsed.keywords.filter(
             (k: RawExtractedTerm) => k.term && isMeaningfulTerm(k.term)
           );
-          if (validKeywords.length >= 10) {
+          if (validKeywords.length >= 5) {
             return validKeywords;
           }
         }
@@ -367,7 +368,7 @@ ${transcript.slice(0, 6000)}
       }
     }
 
-    if (extractedList.length >= 10) {
+    if (extractedList.length >= 5) {
       return extractedList;
     }
 

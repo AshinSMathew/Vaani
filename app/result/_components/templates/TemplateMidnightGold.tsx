@@ -109,13 +109,14 @@ export const TemplateMidnightGold = forwardRef<TemplateRef, TemplateMidnightGold
     setIsRendering(true);
 
     const width = Math.max(340, container.clientWidth);
-    const height = Math.max(480, Math.min(640, Math.round(width * 0.56)));
+    const height = Math.max(520, Math.min(720, Math.round(width * 0.58)));
     const rng = seededRandom(seed + 202);
 
     const sorted = [...keywords].sort((a, b) => b.score - a.score);
     const maxScore = sorted[0]?.score || 1;
     const minScore = sorted[sorted.length - 1]?.score || 0;
     const range = maxScore - minScore || 1;
+    const count = sorted.length;
 
     const wordsData = sorted.map((kw, idx) => {
       const normalized = (kw.score - minScore) / range;
@@ -129,25 +130,25 @@ export const TemplateMidnightGold = forwardRef<TemplateRef, TemplateMidnightGold
       let weight = "700";
 
       if (isHero) {
-        fontSize = Math.max(46, Math.min(76, Math.round(width * 0.11)));
+        fontSize = count > 30 ? Math.max(36, Math.min(60, Math.round(width * 0.088))) : Math.max(46, Math.min(72, Math.round(width * 0.105)));
         rotation = 0;
         color = "#facc15";
         weight = "900";
-      } else if (idx < 5) {
-        fontSize = Math.max(26, Math.min(42, Math.round(width * 0.052 + normalized * 10)));
-        rotation = rng() < 0.65 ? 0 : 90;
+      } else if (idx < 6) {
+        fontSize = count > 30 ? Math.max(20, Math.min(32, Math.round(width * 0.04 + normalized * 6))) : Math.max(24, Math.min(38, Math.round(width * 0.048 + normalized * 8)));
+        rotation = rng() < 0.68 ? 0 : 90;
         color = rng() < 0.4 ? "#fbbf24" : PALETTE[Math.floor(rng() * PALETTE.length)];
         weight = "800";
       } else if (isMultiWord) {
-        fontSize = Math.max(14, Math.min(22, Math.round(width * 0.026 + normalized * 6)));
+        fontSize = Math.max(11, Math.min(18, Math.round(width * 0.02 + normalized * 5)));
         rotation = 0;
         color = PALETTE[Math.floor(rng() * PALETTE.length)];
         weight = "700";
       } else {
-        fontSize = Math.max(12, Math.min(30, Math.round(13 + normalized * 17)));
-        rotation = rng() < 0.6 ? 0 : 90;
+        fontSize = count > 30 ? Math.max(10, Math.min(22, Math.round(10 + normalized * 12))) : Math.max(12, Math.min(28, Math.round(12 + normalized * 16)));
+        rotation = rng() < 0.65 ? 0 : 90;
         color = PALETTE[Math.floor(rng() * PALETTE.length)];
-        weight = fontSize > 20 ? "800" : "600";
+        weight = fontSize > 18 ? "800" : "600";
       }
 
       return {
@@ -165,7 +166,7 @@ export const TemplateMidnightGold = forwardRef<TemplateRef, TemplateMidnightGold
     const layout = cloud<cloud.Word>()
       .size([width, height])
       .words(wordsData.map((w) => ({ ...w })))
-      .padding(5)
+      .padding(2.5)
       .rotate((d: cloud.Word) => d.rotate || 0)
       .font(FONT_FAMILY)
       .fontWeight((d: cloud.Word) => (d.weight ? String(d.weight) : "700"))

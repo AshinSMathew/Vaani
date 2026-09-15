@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "vaani.+ | Audio to AI Semantic Word Cloud",
+  title: "Vaani",
   description:
     "Turn conversations and recordings into intelligent visual summaries and semantic word clouds powered by Sarvam AI Saaras v4.",
   other: {

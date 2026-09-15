@@ -1,12 +1,102 @@
 export const KNOWN_ACRONYMS = new Set([
   "AWS", "GCP", "API", "REST", "SQL", "NOSQL", "AI", "ML", "LLM", "NLP", 
-  "UI", "UX", "CI/CD", "SaaS", "PaaS", "CSS", "HTML", "JS", "TS", "SDK", 
-  "JSON", "JWT", "HTTP", "HTTPS", "TCP", "IP", "DNS", "URL", "IDE", "GPU",
-  "CPU", "RAM", "ROM", "SSD", "IoT", "AR", "VR", "QA", "SRE", "RAG",
-  "CDN", "ORM", "SEO", "S3", "EC2", "RDS", "EKS", "ECS", "IAM", "VPC",
-  "CRUD", "DOM", "SPA", "SSR", "SSG", "ISR", "PWA", "CLI", "RPC", "GRPC",
-  "K8S", "CI", "CD", "OOP", "FP", "TDD", "BDD", "ETL", "BI", "NLP"
+  "UI", "UX", "CI/CD", "CI", "CD", "SaaS", "PaaS", "IaaS", "CSS", "HTML", 
+  "JS", "TS", "SDK", "JSON", "JWT", "HTTP", "HTTPS", "TCP", "IP", "DNS", 
+  "URL", "URI", "IDE", "GPU", "CPU", "RAM", "ROM", "SSD", "IoT", "AR", 
+  "VR", "QA", "SRE", "RAG", "CDN", "ORM", "SEO", "S3", "EC2", "RDS", 
+  "EKS", "ECS", "IAM", "VPC", "CRUD", "DOM", "SPA", "SSR", "SSG", "ISR", 
+  "PWA", "CLI", "RPC", "GRPC", "K8S", "OOP", "FP", "TDD", "BDD", "ETL", 
+  "BI", "STT", "TTS", "ASR", "LLMS", "APIS", "SDKS", "VCS", "SLA", "DB",
+  "OS", "PR", "MR", "MVP", "KPI", "ROI"
 ]);
+
+export const PHONETIC_REPLACEMENTS: Record<string, string> = {
+  "kuberneties": "Kubernetes",
+  "kubernetis": "Kubernetes",
+  "kubernete": "Kubernetes",
+  "k8": "Kubernetes",
+  "k8s": "Kubernetes",
+  "postgress": "PostgreSQL",
+  "postgre": "PostgreSQL",
+  "postgres": "PostgreSQL",
+  "postgres sql": "PostgreSQL",
+  "postgressql": "PostgreSQL",
+  "react js": "React",
+  "reactjs": "React",
+  "react.js": "React",
+  "next js": "Next.js",
+  "nextjs": "Next.js",
+  "next.js": "Next.js",
+  "node js": "Node.js",
+  "nodejs": "Node.js",
+  "node.js": "Node.js",
+  "type script": "TypeScript",
+  "typescript": "TypeScript",
+  "java script": "JavaScript",
+  "javascript": "JavaScript",
+  "dockers": "Docker",
+  "dockerize": "Docker",
+  "docker file": "Dockerfile",
+  "dockerfile": "Dockerfile",
+  "fast api": "FastAPI",
+  "fastapi": "FastAPI",
+  "tail wind": "Tailwind CSS",
+  "tailwindcss": "Tailwind CSS",
+  "pipline": "Pipeline",
+  "pipe line": "Pipeline",
+  "pipelines": "Pipeline",
+  "micro services": "Microservices",
+  "micro service": "Microservices",
+  "microservice": "Microservices",
+  "mongo db": "MongoDB",
+  "mongodb": "MongoDB",
+  "git hub": "GitHub",
+  "github": "GitHub",
+  "git lab": "GitLab",
+  "gitlab": "GitLab",
+  "rest api": "REST API",
+  "restful api": "REST API",
+  "restful": "REST API",
+  "graph ql": "GraphQL",
+  "graphql": "GraphQL",
+  "develepor": "Developer",
+  "develepment": "Development",
+  "enviroment": "Environment",
+  "implemetation": "Implementation",
+  "intergration": "Integration",
+  "mangement": "Management",
+  "reqest": "Request",
+  "responce": "Response",
+  "configration": "Configuration",
+  "libary": "Library",
+  "proccess": "Process",
+  "proccessing": "Processing",
+  "optmization": "Optimization",
+  "architechture": "Architecture",
+  "algorythm": "Algorithms",
+  "statictics": "Statistics",
+  "analitics": "Analytics",
+  "artifical": "Artificial Intelligence",
+  "machin learning": "Machine Learning",
+  "automted": "Automated",
+  "deployement": "Deployment",
+  "scallability": "Scalability",
+  "databse": "Database",
+  "frontent": "Frontend",
+  "backent": "Backend",
+  "asynch": "Async",
+  "asynchronus": "Asynchronous",
+  "performence": "Performance",
+  "secuity": "Security",
+  "authenication": "Authentication",
+  "authorisation": "Authorization",
+  "monolith": "Monolith",
+  "monolithic": "Monolith",
+  "synthesizer": "Synthesizer",
+  "transcipt": "Transcript",
+  "transcribtion": "Transcription",
+  "repositry": "Repository",
+};
 
 export const KNOWN_PROPER_NOUNS: Record<string, string> = {
   "python": "Python",
@@ -16,6 +106,7 @@ export const KNOWN_PROPER_NOUNS: Record<string, string> = {
   "next.js": "Next.js",
   "react": "React",
   "reactjs": "React",
+  "react.js": "React",
   "vue": "Vue",
   "vuejs": "Vue",
   "angular": "Angular",
@@ -26,13 +117,16 @@ export const KNOWN_PROPER_NOUNS: Record<string, string> = {
   "postgresql": "PostgreSQL",
   "postgres": "PostgreSQL",
   "mysql": "MySQL",
+  "sqlite": "SQLite",
   "redis": "Redis",
   "graphql": "GraphQL",
   "fastapi": "FastAPI",
   "django": "Django",
   "flask": "Flask",
   "express": "Express",
+  "expressjs": "Express",
   "nodejs": "Node.js",
+  "node.js": "Node.js",
   "node": "Node.js",
   "github": "GitHub",
   "gitlab": "GitLab",
@@ -46,6 +140,7 @@ export const KNOWN_PROPER_NOUNS: Record<string, string> = {
   "claude": "Claude",
   "aws": "AWS",
   "azure": "Azure",
+  "gcp": "Google Cloud",
   "tailwind": "Tailwind CSS",
   "tailwindcss": "Tailwind CSS",
   "linux": "Linux",
@@ -57,6 +152,13 @@ export const KNOWN_PROPER_NOUNS: Record<string, string> = {
   "webpack": "Webpack",
   "vite": "Vite",
   "turbopack": "Turbopack",
+  "devops": "DevOps",
+  "microservices": "Microservices",
+  "analytics": "Analytics",
+  "statistics": "Statistics",
+  "architecture": "Architecture",
+  "algorithms": "Algorithms",
+  "optimization": "Optimization",
 };
 
 export const STOP_WORDS = new Set([
@@ -100,98 +202,134 @@ export const STOP_WORDS = new Set([
   "mentioned", "mention", "session", "conversation", "recording", "meeting",
   "audio", "video", "today", "yesterday", "tomorrow", "tonight", "firstly",
   "secondly", "overall", "anyway", "meanwhile", "hopefully", "sure", "fine",
-  "hey", "hi", "hello", "thanks", "thank", "please", "bye", "goodbye", "cool"
+  "hey", "hi", "hello", "thanks", "thank", "please", "bye", "goodbye", "cool",
+  "gonna", "wanna", "gotta", "ya", "bro", "dude", "guys", "folks", "somehow"
+]);
+
+export const LEADING_TRAILING_STOP_WORDS = new Set([
+  "the", "a", "an", "and", "or", "but", "nor", "so", "yet", "for", "as", "in", 
+  "on", "at", "to", "with", "about", "into", "through", "during", "before", "after", 
+  "above", "below", "from", "up", "down", "of", "off", "over", "under", "again", 
+  "further", "then", "once", "here", "there", "when", "where", "why", "how", "if", 
+  "out", "by", "near", "all", "any", "both", "each", "few", "more", "most", "other", 
+  "some", "such", "no", "not", "only", "own", "same", "than", "too", "very", "every", 
+  "either", "neither", "i", "me", "my", "myself", "we", "our", "ours", "you", "your", 
+  "he", "him", "his", "she", "her", "it", "its", "they", "them", "their", "what", 
+  "which", "who", "whom", "this", "that", "these", "those", "is", "am", "are", "was", 
+  "were", "be", "been", "being", "have", "has", "had", "do", "does", "did", "done", 
+  "will", "would", "shall", "should", "can", "could", "may", "might", "must", "just",
+  "really", "actually", "basically", "also", "well", "like"
 ]);
 
 export function normalizeTerm(rawTerm: string): string {
   if (!rawTerm) return "";
 
-  const trimmed = rawTerm
+  // Strip leading/trailing quotation marks, asterisks, brackets, and rogue punctuation
+  let cleaned = rawTerm
     .trim()
-    .replace(/^["'`]|["'`]$/g, "")
-    .replace(/[.,;:\-_]+$/, "")
-    .replace(/^[.,;:\-_]+/, "");
+    .replace(/^["'`*#_\[\]()]+|["'`*#_\[\]()]+$/g, "")
+    .replace(/^[.,;:!?-]+|[.,;:!?-]+$/g, "")
+    .trim();
   
-  if (!trimmed) return "";
+  if (!cleaned || cleaned.length < 2) return "";
 
-  const lower = trimmed.toLowerCase();
-  const upper = trimmed.toUpperCase();
+  // If multi-word, trim leading/trailing conversational filler words (e.g. "The Cloud Infrastructure" -> "Cloud Infrastructure")
+  let words = cleaned.split(/\s+/).filter(Boolean);
+  while (words.length > 1 && LEADING_TRAILING_STOP_WORDS.has(words[0].toLowerCase())) {
+    words.shift();
+  }
+  while (words.length > 1 && LEADING_TRAILING_STOP_WORDS.has(words[words.length - 1].toLowerCase())) {
+    words.pop();
+  }
 
+  cleaned = words.join(" ").trim();
+  if (!cleaned || cleaned.length < 2) return "";
+
+  const lower = cleaned.toLowerCase();
+  const upper = cleaned.toUpperCase();
+
+  // 1. Direct Phonetic / Misspelling Replacement
+  if (PHONETIC_REPLACEMENTS[lower]) {
+    return PHONETIC_REPLACEMENTS[lower];
+  }
+
+  // 2. Direct Acronym Match
   if (KNOWN_ACRONYMS.has(upper)) {
     return upper;
   }
 
+  // 3. Direct Proper Noun Match
   if (KNOWN_PROPER_NOUNS[lower]) {
     return KNOWN_PROPER_NOUNS[lower];
   }
 
-  if (!trimmed.includes(" ")) {
-    let singular = trimmed;
-    if (
-      lower.endsWith("ies") &&
-      lower.length > 5 &&
-      !["series", "species"].includes(lower)
-    ) {
-      singular = trimmed.slice(0, -3) + "y";
-    } else if (
-      lower.endsWith("es") &&
-      (lower.endsWith("shes") || lower.endsWith("ches") || lower.endsWith("xes"))
-    ) {
-      singular = trimmed.slice(0, -2);
-    } else if (
-      lower.endsWith("s") &&
-      !lower.endsWith("ss") &&
-      !lower.endsWith("us") &&
-      !lower.endsWith("is") &&
-      !KNOWN_ACRONYMS.has(upper) &&
-      lower.length > 3
-    ) {
-      singular = trimmed.slice(0, -1);
+  // 4. Single Word Normalization (Preserve dictionary spelling without destructive singularization)
+  if (!cleaned.includes(" ")) {
+    // Preserve words that start with uppercase if already formatted cleanly
+    if (/^[A-Z][a-z0-9]+$/.test(cleaned)) {
+      return cleaned;
     }
-
-    const singLower = singular.toLowerCase();
-    if (KNOWN_PROPER_NOUNS[singLower]) return KNOWN_PROPER_NOUNS[singLower];
-    if (KNOWN_ACRONYMS.has(singular.toUpperCase())) return singular.toUpperCase();
-
-    return singular.charAt(0).toUpperCase() + singular.slice(1);
+    // Capitalize first letter cleanly
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
   }
 
-  return trimmed
-    .split(/\s+/)
-    .map((word) => {
-      const wLower = word.toLowerCase();
-      const wUpper = word.toUpperCase();
+  // 5. Multi-Word Phrase Normalization (Title Case, respecting acronyms, proper nouns, and minor prepositions)
+  const minorWords = new Set(["in", "on", "at", "to", "for", "with", "and", "of", "via", "by", "the", "a", "an"]);
+
+  return words
+    .map((word, idx) => {
+      const wClean = word.replace(/^[.,;:!?-]+|[.,;:!?-]+$/g, "");
+      const wLower = wClean.toLowerCase();
+      const wUpper = wClean.toUpperCase();
+
+      if (PHONETIC_REPLACEMENTS[wLower]) return PHONETIC_REPLACEMENTS[wLower];
       if (KNOWN_ACRONYMS.has(wUpper)) return wUpper;
       if (KNOWN_PROPER_NOUNS[wLower]) return KNOWN_PROPER_NOUNS[wLower];
-      
-      if (["in", "on", "at", "to", "for", "with", "and", "of", "via"].includes(wLower)) {
+
+      if (idx > 0 && minorWords.has(wLower)) {
         return wLower;
       }
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      return wClean.charAt(0).toUpperCase() + wClean.slice(1).toLowerCase();
     })
     .join(" ");
 }
 
 export function isMeaningfulTerm(term: string): boolean {
   if (!term) return false;
-  const cleaned = term.trim().replace(/^["'`]|["'`]$/g, "");
+  const cleaned = term.trim().replace(/^["'`*#_\[\]()]+|["'`*#_\[\]()]+$/g, "").trim();
   if (cleaned.length < 2) return false;
 
   const lower = cleaned.toLowerCase();
 
+  // Must not be a standalone stop word
   if (STOP_WORDS.has(lower)) return false;
-  if (/^[\d\s.,;:\-_/\\#@!$%^&*()]+$/.test(cleaned)) return false;
 
+  // Must not be only digits, symbols, or punctuation
+  if (/^[\d\s.,;:\-_/\\#@!$%^&*()+=~`|?<>]+$/.test(cleaned)) return false;
+
+  // Single word checks
   if (!cleaned.includes(" ")) {
     if (STOP_WORDS.has(lower)) return false;
-    if (cleaned.length <= 2 && !KNOWN_ACRONYMS.has(cleaned.toUpperCase())) {
+    // 2-character words must be known acronyms (e.g. AI, ML, UI, QA, TS, JS, IP, CI, CD, DB, OS)
+    if (cleaned.length === 2 && !KNOWN_ACRONYMS.has(cleaned.toUpperCase())) {
       return false;
     }
+    // Reject gibberish sequences (e.g., no vowels and >3 letters unless known acronym)
+    if (cleaned.length > 3 && !/[aeiouy]/i.test(cleaned) && !KNOWN_ACRONYMS.has(cleaned.toUpperCase())) {
+      return false;
+    }
+    return true;
   }
 
-  const words = cleaned.split(/\s+/).map((w) => w.toLowerCase());
-  const hasSubstantialWord = words.some((w) => !STOP_WORDS.has(w) && w.length >= 2);
-  if (!hasSubstantialWord) return false;
+  // Multi-word checks
+  const words = cleaned.split(/\s+/).map((w) => w.toLowerCase().replace(/[^a-z0-9]/g, ""));
+  const meaningfulWords = words.filter((w) => w.length >= 2 && !STOP_WORDS.has(w));
+  
+  // Must contain at least one meaningful non-stop word
+  if (meaningfulWords.length === 0) return false;
+
+  // Ratio of meaningful words to total words must be at least 50%
+  if (meaningfulWords.length / words.length < 0.5) return false;
 
   return true;
 }

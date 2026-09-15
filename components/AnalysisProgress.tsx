@@ -98,7 +98,7 @@ export const AnalysisProgress: React.FC<AnalysisProgressProps> = ({
 
       <div className="w-full bg-zinc-900 rounded-full h-2 overflow-hidden mb-8 border border-white/5">
         <div
-          className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full transition-all duration-300 rounded-full"
+          className="bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 h-full transition-all duration-300 rounded-full"
           style={{ width: `${simulatedProgress}%` }}
         />
       </div>

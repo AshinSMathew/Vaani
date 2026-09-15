@@ -1,22 +1,74 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   Download,
   RotateCcw,
-  Layers,
   ListOrdered,
   LayoutGrid,
   Info,
   RefreshCw,
   Sparkles,
-  Sun,
-  Moon,
+  Palette,
+  Check,
 } from "lucide-react";
-import cloud from "d3-cloud";
-import { KeywordItem, WordCategory, AnalysisResult } from "@/types";
-import { CATEGORY_COLORS } from "@/lib/constants";
+import { KeywordItem, AnalysisResult } from "@/types";
 import { WordModal } from "./WordModal";
+import { TemplateNeonCyan, TemplateRef } from "./templates/TemplateNeonCyan";
+import { TemplateMidnightGold } from "./templates/TemplateMidnightGold";
+import { TemplateSlateTeal } from "./templates/TemplateSlateTeal";
+import { TemplateEditorialOrange } from "./templates/TemplateEditorialOrange";
+
+export type TemplateId = "neon-cyan" | "midnight-gold" | "slate-teal" | "editorial-orange";
+
+interface TemplateOption {
+  id: TemplateId;
+  name: string;
+  tagline: string;
+  bgPreview: string;
+  heroColor: string;
+  accentColors: string[];
+  textColor: string;
+}
+
+const TEMPLATES: TemplateOption[] = [
+  {
+    id: "neon-cyan",
+    name: "Neon Cyan",
+    tagline: "Electric cyan & white on pure black",
+    bgPreview: "bg-black",
+    heroColor: "#ffffff",
+    accentColors: ["#00e5ff", "#00b4d8", "#48cae4", "#ffffff"],
+    textColor: "text-cyan-400",
+  },
+  {
+    id: "midnight-gold",
+    name: "Midnight Gold",
+    tagline: "Radiant gold & warm ember on black",
+    bgPreview: "bg-black",
+    heroColor: "#facc15",
+    accentColors: ["#facc15", "#fb923c", "#f87171", "#fed7aa"],
+    textColor: "text-amber-400",
+  },
+  {
+    id: "slate-teal",
+    name: "Slate Corporate",
+    tagline: "Dark navy & mint teal on slate gray",
+    bgPreview: "bg-[#5c6e7a]",
+    heroColor: "#0b1e2d",
+    accentColors: ["#0b1e2d", "#00f5d4", "#22d3ee", "#ffffff"],
+    textColor: "text-teal-300",
+  },
+  {
+    id: "editorial-orange",
+    name: "Editorial Orange",
+    tagline: "Terracotta & warm amber on white",
+    bgPreview: "bg-white",
+    heroColor: "#ea580c",
+    accentColors: ["#ea580c", "#c2410c", "#d97706", "#65a30d"],
+    textColor: "text-orange-500",
+  },
+];
 
 interface WordCloudProps {
   result: AnalysisResult;
@@ -24,305 +76,33 @@ interface WordCloudProps {
   onWordClick?: (term: string) => void;
 }
 
-const PALETTE_LIGHT = [
-  "#b8502a",
-  "#1b7a42",
-  "#4338ca",
-  "#7c3aed",
-  "#0e7490",
-  "#be123c",
-  "#b45309",
-  "#334155",
-  "#0284c7",
-  "#15803d",
-  "#9333ea",
-  "#c2410c",
-];
-
-const PALETTE_DARK = [
-  "#38bdf8",
-  "#818cf8",
-  "#c084fc",
-  "#fb7185",
-  "#34d399",
-  "#fbbf24",
-  "#60a5fa",
-  "#a78bfa",
-  "#2dd4bf",
-  "#f472b6",
-  "#4ade80",
-  "#f97316",
-];
-
-const FONT_FAMILY = "'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-
-interface LayoutWord {
-  text: string;
-  size: number;
-  x: number;
-  y: number;
-  rotate: number;
-  font: string;
-  weight: string;
-  color: string;
-  score: number;
-  category: WordCategory;
-}
-
 export const WordCloud: React.FC<WordCloudProps> = ({
   result,
   onReset,
   onWordClick,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("neon-cyan");
   const [activeWord, setActiveWord] = useState<KeywordItem | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [viewMode, setViewMode] = useState<"cloud" | "ranked" | "categories">("cloud");
+  const [viewMode, setViewMode] = useState<"cloud" | "ranked">("cloud");
   const [cloudSeed, setCloudSeed] = useState(0);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [canvasTheme, setCanvasTheme] = useState<"light" | "dark">("light");
-  const [layoutWords, setLayoutWords] = useState<LayoutWord[]>([]);
+  const [placedCount, setPlacedCount] = useState<number>(0);
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const activeTemplateRef = useRef<TemplateRef | null>(null);
 
   const { keywords, metadata } = result;
-
-  const filteredKeywords = keywords.filter((kw) => {
-    if (selectedCategory === "all") return true;
-    return kw.category === selectedCategory;
-  });
 
   const handleSelectWord = (kw: KeywordItem) => {
     setActiveWord(kw);
     if (onWordClick) onWordClick(kw.term);
   };
 
-  const seededRandom = useCallback((seed: number) => {
-    let s = seed;
-    return () => {
-      s = (s * 16807) % 2147483647;
-      return (s - 1) / 2147483646;
-    };
+  const handleRenderComplete = useCallback((count: number) => {
+    setPlacedCount(count);
   }, []);
 
-  const generateWordCloud = useCallback(async () => {
-    const container = containerRef.current;
-    const canvas = canvasRef.current;
-    if (!container || !canvas) return;
-
-    if (typeof document !== "undefined" && document.fonts) {
-      try {
-        await document.fonts.ready;
-      } catch {
-      }
-    }
-
-    const uniqueKeywords = filteredKeywords;
-    if (uniqueKeywords.length === 0) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        const w = container.clientWidth;
-        const h = 480;
-        canvas.width = w * 2;
-        canvas.height = h * 2;
-        canvas.style.width = `${w}px`;
-        canvas.style.height = `${h}px`;
-        ctx.scale(2, 2);
-        ctx.fillStyle = canvasTheme === "light" ? "#faf9f6" : "#0c0d12";
-        ctx.fillRect(0, 0, w, h);
-        ctx.fillStyle = "#888";
-        ctx.font = `600 15px ${FONT_FAMILY}`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("No keywords found for selected category.", w / 2, h / 2);
-      }
-      setLayoutWords([]);
-      return;
-    }
-
-    setIsGenerating(true);
-
-    const width = Math.max(320, container.clientWidth);
-    const height = Math.max(480, Math.min(620, Math.round(width * 0.52)));
-
-    const maxScore = uniqueKeywords[0]?.score || 1;
-    const minScore = uniqueKeywords[uniqueKeywords.length - 1]?.score || 0;
-    const range = maxScore - minScore || 1;
-
-    const rng = seededRandom(cloudSeed + 23);
-    const palette = canvasTheme === "light" ? PALETTE_LIGHT : PALETTE_DARK;
-
-    const wordData = uniqueKeywords.map((kw) => {
-      const normalized = (kw.score - minScore) / range;
-      const isMultiWord = kw.term.includes(" ") || kw.term.length > 14;
-
-      let fontSize: number;
-      let rotation: number;
-
-      if (isMultiWord) {
-        const minPhraseFont = Math.max(13, width / 65);
-        const maxPhraseFont = Math.max(20, Math.min(26, width / 34));
-        fontSize = minPhraseFont + normalized * (maxPhraseFont - minPhraseFont);
-        rotation = 0;
-      } else {
-        const minSingleFont = Math.max(16, width / 55);
-        const maxSingleFont = Math.max(32, Math.min(50, width / 18));
-        fontSize = minSingleFont + normalized * (maxSingleFont - minSingleFont);
-        rotation = rng() < 0.75 ? 0 : 90;
-      }
-
-      const colorIdx = Math.floor(rng() * palette.length);
-
-      return {
-        text: kw.term,
-        size: Math.round(fontSize),
-        rotate: rotation,
-        score: kw.score,
-        category: kw.category,
-        color: palette[colorIdx],
-      };
-    });
-
-    const layout = cloud()
-      .size([width, height])
-      .words(wordData.map((d) => ({ ...d })))
-      .padding(5)
-      .rotate((d: { rotate?: number }) => d.rotate || 0)
-      .font(FONT_FAMILY)
-      .fontWeight((d: { size?: number }) => {
-        const s = d.size || 16;
-        if (s >= 32) return "800";
-        if (s >= 20) return "700";
-        return "600";
-      })
-      .fontSize((d: { size?: number }) => d.size || 16)
-      .spiral("archimedean")
-      .random(rng)
-      .on("end", (words: Array<{
-        text?: string;
-        size?: number;
-        x?: number;
-        y?: number;
-        rotate?: number;
-        font?: string;
-        weight?: string;
-        color?: string;
-        score?: number;
-        category?: WordCategory;
-      }>) => {
-        const scale = 2;
-        canvas.width = width * scale;
-        canvas.height = height * scale;
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        ctx.scale(scale, scale);
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
-
-        ctx.fillStyle = canvasTheme === "light" ? "#faf9f6" : "#0c0d12";
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.fillStyle = canvasTheme === "light" ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.03)";
-        const dotGap = 24;
-        for (let x = 12; x < width; x += dotGap) {
-          for (let y = 12; y < height; y += dotGap) {
-            ctx.beginPath();
-            ctx.arc(x, y, 1, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-
-        const placed: LayoutWord[] = [];
-
-        for (const w of words) {
-          if (!w.text || w.x === undefined || w.y === undefined) continue;
-
-          const fontSize = w.size || 16;
-          const fontWeight = w.weight || "700";
-          const fontFamily = FONT_FAMILY;
-          const rotation = w.rotate || 0;
-          const color = (w as { color?: string }).color || (canvasTheme === "light" ? "#1e293b" : "#f1f5f9");
-
-          ctx.save();
-          ctx.translate(width / 2 + w.x, height / 2 + w.y);
-          if (rotation !== 0) {
-            ctx.rotate((rotation * Math.PI) / 180);
-          }
-          ctx.fillStyle = color;
-          ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "alphabetic";
-          ctx.fillText(w.text, 0, 0);
-          ctx.restore();
-
-          placed.push({
-            text: w.text,
-            size: fontSize,
-            x: w.x,
-            y: w.y,
-            rotate: rotation,
-            font: fontFamily,
-            weight: fontWeight,
-            color,
-            score: (w as { score?: number }).score || 0,
-            category: (w as { category?: WordCategory }).category || "general",
-          });
-        }
-
-        setLayoutWords(placed);
-        setIsGenerating(false);
-      });
-
-    layout.start();
-  }, [filteredKeywords, cloudSeed, canvasTheme, seededRandom]);
-
-  useEffect(() => {
-    if (viewMode === "cloud") {
-      const timer = setTimeout(() => generateWordCloud(), 60);
-      return () => clearTimeout(timer);
-    }
-  }, [viewMode, selectedCategory, cloudSeed, canvasTheme, generateWordCloud]);
-
-  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas || layoutWords.length === 0) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const clickX = event.clientX - rect.left - rect.width / 2;
-    const clickY = event.clientY - rect.top - rect.height / 2;
-
-    let closestWord: LayoutWord | null = null;
-    let minDistance = Infinity;
-
-    for (const w of layoutWords) {
-      const dx = clickX - w.x;
-      const dy = clickY - w.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const hitRadius = Math.max(20, w.size * 0.8 + (w.text.length * 4));
-
-      if (dist < hitRadius && dist < minDistance) {
-        minDistance = dist;
-        closestWord = w;
-      }
-    }
-
-    if (closestWord) {
-      const kw = keywords.find(
-        (k) => k.term.toLowerCase() === closestWord!.text.toLowerCase()
-      );
-      if (kw) {
-        handleSelectWord(kw);
-      }
-    }
-  };
-
   const handleExportPng = async () => {
-    const canvas = canvasRef.current;
+    const canvas = activeTemplateRef.current?.getCanvas();
     if (!canvas) return;
     setIsExporting(true);
 
@@ -330,7 +110,7 @@ export const WordCloud: React.FC<WordCloudProps> = ({
       const dataUrl = canvas.toDataURL("image/png", 1.0);
       const link = document.createElement("a");
       const baseName = metadata.filename.replace(/\.[^/.]+$/, "") || "session";
-      link.download = `vaani-wordcloud-${baseName}.png`;
+      link.download = `vaani-${selectedTemplate}-${baseName}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -340,49 +120,18 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     }
   };
 
-  const categoriesList: WordCategory[] = [
-    "technology", "project", "skill", "concept", "goal", "theme",
-  ];
-
   return (
     <div className="w-full flex flex-col items-center">
       <WordModal keyword={activeWord} onClose={() => setActiveWord(null)} />
 
       <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 sm:pb-0 scrollbar-none">
-          {["all", ...categoriesList].map((cat) => {
-            const isSelected = selectedCategory === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "bg-zinc-900/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-white/5"
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono font-medium text-zinc-400">
+            {keywords.length} extracted semantic keywords
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
-          {viewMode === "cloud" && (
-            <button
-              onClick={() => setCanvasTheme((t) => (t === "light" ? "dark" : "light"))}
-              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-400 hover:text-zinc-200 transition-all cursor-pointer"
-              title={`Switch to ${canvasTheme === "light" ? "Dark" : "Light"} Canvas Theme`}
-            >
-              {canvasTheme === "light" ? (
-                <Moon className="w-3.5 h-3.5 text-zinc-300" />
-              ) : (
-                <Sun className="w-3.5 h-3.5 text-amber-400" />
-              )}
-            </button>
-          )}
-
           <div className="flex items-center p-1 bg-zinc-900 rounded-xl border border-white/10">
             <button
               onClick={() => setViewMode("cloud")}
@@ -402,36 +151,26 @@ export const WordCloud: React.FC<WordCloudProps> = ({
             >
               <ListOrdered className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => setViewMode("categories")}
-              aria-label="Category column view"
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === "categories" ? "bg-indigo-600 text-white" : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-            </button>
           </div>
 
           {viewMode === "cloud" && (
             <button
               onClick={() => setCloudSeed((s) => s + 1)}
-              disabled={isGenerating}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-white/10 hover:border-white/20 transition-all cursor-pointer disabled:opacity-50"
-              title="Shuffle layout"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
+              title="Shuffle layout arrangement"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? "animate-spin" : ""}`} />
+              <RefreshCw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Shuffle</span>
             </button>
           )}
 
           <button
             onClick={handleExportPng}
-            disabled={isExporting || isGenerating}
+            disabled={isExporting}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-50"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>{isExporting ? "Saving..." : "Download PNG"}</span>
+            <span>{isExporting ? "Exporting..." : "Download PNG"}</span>
           </button>
 
           <button
@@ -444,6 +183,74 @@ export const WordCloud: React.FC<WordCloudProps> = ({
         </div>
       </div>
 
+      <div className="w-full mb-6">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <div className="flex items-center gap-2">
+            <Palette className="w-4 h-4 text-indigo-400" />
+            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300">
+              Select Design Template
+            </h3>
+          </div>
+          <span className="text-[11px] font-mono text-zinc-500">
+            4 Distinct Visual Styles
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {TEMPLATES.map((tmpl) => {
+            const isSelected = selectedTemplate === tmpl.id;
+            return (
+              <button
+                key={tmpl.id}
+                onClick={() => setSelectedTemplate(tmpl.id)}
+                className={`relative rounded-2xl p-3.5 text-left transition-all duration-200 cursor-pointer border flex flex-col justify-between overflow-hidden group ${
+                  isSelected
+                    ? "bg-zinc-900 border-indigo-500 shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500/40"
+                    : "bg-zinc-950/80 border-white/10 hover:border-white/20 hover:bg-zinc-900/60"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full mb-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <div
+                      className={`w-6 h-6 rounded-lg ${tmpl.bgPreview} border border-white/20 flex items-center justify-center shadow-inner`}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: tmpl.heroColor }}
+                      />
+                    </div>
+                    <div className="flex -space-x-1">
+                      {tmpl.accentColors.slice(0, 3).map((c, i) => (
+                        <span
+                          key={i}
+                          className="w-3 h-3 rounded-full border border-black/40 shadow-xs"
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {isSelected && (
+                    <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                      <Check className="w-3 h-3" />
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-bold text-zinc-100 group-hover:text-white flex items-center gap-1.5">
+                    {tmpl.name}
+                  </h4>
+                  <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">
+                    {tmpl.tagline}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="w-full glass-panel-glow rounded-3xl border border-indigo-500/20 shadow-2xl relative overflow-hidden">
         <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-purple-600/10 blur-3xl pointer-events-none" />
@@ -452,128 +259,109 @@ export const WordCloud: React.FC<WordCloudProps> = ({
           <div>
             <span className="text-[11px] font-mono uppercase tracking-widest text-indigo-400 block mb-1">
               <Sparkles className="w-3 h-3 inline-block mr-1 -mt-0.5" />
-              AI Semantic Analysis
+              AI Semantic Word Cloud
             </span>
-            <h2 className="text-xl sm:text-2xl font-black text-zinc-100 tracking-tight">
-              Semantic Word Cloud
+            <h2 className="text-xl sm:text-2xl font-black text-zinc-100 tracking-tight flex items-center gap-2">
+              <span>{TEMPLATES.find((t) => t.id === selectedTemplate)?.name}</span>
+              <span className="text-xs font-mono font-normal text-zinc-400 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                Template
+              </span>
             </h2>
           </div>
           <div className="text-right">
             <span className="text-xs font-mono font-medium text-zinc-300">
-              {filteredKeywords.length} topics & phrases
+              {keywords.length} topics & phrases
             </span>
-            <span className="text-[10px] text-zinc-500 block">
+            <span className="text-[10px] text-zinc-500 block font-mono">
               {metadata.audioProcessingMethod} · Saaras v4
             </span>
           </div>
         </div>
 
         {viewMode === "cloud" && (
-          <div ref={containerRef} className="p-4 sm:p-6">
-            <div
-              className={`relative rounded-2xl overflow-hidden shadow-inner transition-colors duration-300 ${
-                canvasTheme === "light" ? "bg-[#faf9f6]" : "bg-[#0c0d12]"
-              }`}
-            >
-              <canvas
-                ref={canvasRef}
-                onClick={handleCanvasClick}
-                className="w-full block cursor-pointer"
-                style={{ minHeight: 440 }}
-                title="Click any word to inspect meaning and context"
+          <div className="p-4 sm:p-6">
+            {selectedTemplate === "neon-cyan" && (
+              <TemplateNeonCyan
+                ref={activeTemplateRef}
+                keywords={keywords}
+                seed={cloudSeed}
+                onWordClick={handleSelectWord}
+                onRenderComplete={handleRenderComplete}
               />
-              {isGenerating && (
-                <div
-                  className={`absolute inset-0 flex items-center justify-center backdrop-blur-xs ${
-                    canvasTheme === "light" ? "bg-[#faf9f6]/80 text-zinc-700" : "bg-[#0c0d12]/80 text-zinc-300"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <RefreshCw className="w-4 h-4 animate-spin text-indigo-500" />
-                    Synthesizing Semantic Word Cloud...
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
+
+            {selectedTemplate === "midnight-gold" && (
+              <TemplateMidnightGold
+                ref={activeTemplateRef}
+                keywords={keywords}
+                seed={cloudSeed}
+                onWordClick={handleSelectWord}
+                onRenderComplete={handleRenderComplete}
+              />
+            )}
+
+            {selectedTemplate === "slate-teal" && (
+              <TemplateSlateTeal
+                ref={activeTemplateRef}
+                keywords={keywords}
+                seed={cloudSeed}
+                onWordClick={handleSelectWord}
+                onRenderComplete={handleRenderComplete}
+              />
+            )}
+
+            {selectedTemplate === "editorial-orange" && (
+              <TemplateEditorialOrange
+                ref={activeTemplateRef}
+                keywords={keywords}
+                seed={cloudSeed}
+                onWordClick={handleSelectWord}
+                onRenderComplete={handleRenderComplete}
+              />
+            )}
+
             <div className="flex flex-col sm:flex-row items-center justify-between mt-3 text-[11px] text-zinc-500 gap-2 px-1">
-              <span>{layoutWords.length} words & keyphrases placed · Click any word on canvas to inspect</span>
-              <span className="font-mono">High-DPI 2x Retina PNG Export</span>
+              <span>{placedCount} terms placed with zero overlap · Click any word on cloud to inspect</span>
+              <span className="font-mono">High-DPI 2x Lossless PNG Export</span>
             </div>
           </div>
         )}
 
         {viewMode === "ranked" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-6 sm:p-10">
-            {filteredKeywords.map((kw, index) => {
-              const catTheme = CATEGORY_COLORS[kw.category] || CATEGORY_COLORS.general;
-              return (
-                <div
-                  key={kw.id}
-                  onClick={() => handleSelectWord(kw)}
-                  className="p-4 rounded-xl bg-zinc-900/70 border border-white/5 hover:border-indigo-500/40 transition-all cursor-pointer flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <span className="w-6 text-xs font-mono font-bold text-zinc-500">
-                      #{index + 1}
-                    </span>
-                    <div className="overflow-hidden">
-                      <h4 className="text-sm font-bold text-zinc-100 truncate group-hover:text-indigo-300">
-                        {kw.term}
-                      </h4>
-                      <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded ${catTheme.badge}`}>
-                        {kw.category}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-sm font-bold font-mono text-indigo-400">
-                      {Math.round(kw.score * 100)}%
-                    </span>
-                    <span className="text-[10px] text-zinc-500 block font-mono">
-                      {kw.count}x
-                    </span>
+            {keywords.map((kw, index) => (
+              <div
+                key={kw.id}
+                onClick={() => handleSelectWord(kw)}
+                className="p-4 rounded-xl bg-zinc-900/70 border border-white/5 hover:border-indigo-500/40 transition-all cursor-pointer flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <span className="w-6 text-xs font-mono font-bold text-zinc-500">
+                    #{index + 1}
+                  </span>
+                  <div className="overflow-hidden">
+                    <h4 className="text-sm font-bold text-zinc-100 truncate group-hover:text-indigo-300">
+                      {kw.term}
+                    </h4>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-
-        {viewMode === "categories" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 sm:p-10">
-            {categoriesList.map((cat) => {
-              const catKeywords = keywords.filter((k) => k.category === cat);
-              if (catKeywords.length === 0) return null;
-              const catTheme = CATEGORY_COLORS[cat];
-              return (
-                <div key={cat} className="rounded-2xl bg-zinc-900/60 border border-white/5 p-4 flex flex-col">
-                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/5">
-                    <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${catTheme.badge} ${catTheme.border}`}>
-                      {cat}
-                    </span>
-                    <span className="text-[11px] font-mono text-zinc-500">{catKeywords.length}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {catKeywords.map((kw) => (
-                      <button
-                        key={kw.id}
-                        onClick={() => handleSelectWord(kw)}
-                        className={`text-xs font-medium px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${catTheme.bg} ${catTheme.text} ${catTheme.border} hover:scale-105`}
-                      >
-                        {kw.term}
-                      </button>
-                    ))}
-                  </div>
+                <div className="text-right shrink-0">
+                  <span className="text-sm font-bold font-mono text-indigo-400">
+                    {Math.round(kw.score * 100)}%
+                  </span>
+                  <span className="text-[10px] text-zinc-500 block font-mono">
+                    {kw.count}x
+                  </span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
 
         <div className="px-6 sm:px-10 pb-6 pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-zinc-500">
           <div className="flex items-center gap-1.5">
             <Info className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Click any word to see why it was chosen, relevance scores, and discussion context.</span>
+            <span>Click any word to see semantic relevance scores and discussion context.</span>
           </div>
           <span className="font-mono text-[11px]">
             vaani.+ · Sarvam Saaras v4

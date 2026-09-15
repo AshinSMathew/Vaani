@@ -251,7 +251,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             onClick={startRecording}
             disabled={isProcessing}
             aria-label="Start recording audio session"
-            className="group relative w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 p-1 flex items-center justify-center shadow-xl shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mb-5"
+            className="group relative w-20 h-20 rounded-full bg-linear-to-tr from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 p-1 flex items-center justify-center shadow-xl shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mb-5"
           >
             <div className="w-full h-full rounded-full bg-zinc-950/40 backdrop-blur-xs flex items-center justify-center border border-white/20 group-hover:bg-transparent transition-all">
               <Mic className="w-8 h-8 text-white transition-transform group-hover:scale-110" />

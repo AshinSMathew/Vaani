@@ -69,7 +69,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         </p>
 
         {error.suggestion && (
-          <div className="w-full bg-zinc-900/80 border border-white/[0.06] rounded-xl p-3.5 mb-6 text-left flex items-start gap-2.5">
+          <div className="w-full bg-zinc-900/80 border border-white/6 rounded-xl p-3.5 mb-6 text-left flex items-start gap-2.5">
             <HelpCircle className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
             <div className="text-xs text-zinc-400 leading-normal">
               <span className="font-semibold text-zinc-300 block mb-0.5">

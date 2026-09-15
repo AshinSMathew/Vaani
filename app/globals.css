@@ -1,16 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090b;
-  --foreground: #f4f4f5;
-  --card: #121215;
-  --card-border: rgba(255, 255, 255, 0.08);
+  --background: #0a0a0a;
+  --secondary: #0f0f11;
+  --panel: #18181b;
+  --foreground: #ffffff;
+  --muted: #71717a;
+  --hairline: rgba(255, 255, 255, 0.08);
+  --hairline-subtle: rgba(255, 255, 255, 0.04);
   --accent: #6366f1;
+  --accent-pressed: #4338ca;
 }
 
 @layer base {
   * {
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: var(--hairline);
+    border-radius: 0px !important;
   }
   body {
     background-color: var(--background);
@@ -19,75 +24,61 @@
   }
 }
 
-.glass-panel {
-  background: rgba(18, 18, 21, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* Sharp Hairline Panels */
+.hairline-panel {
+  background: #0f0f11;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-.glass-panel-glow {
-  background: rgba(18, 18, 21, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  box-shadow: 0 0 40px -10px rgba(99, 102, 241, 0.15);
+.hairline-panel-subtle {
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.85;
-    transform: scale(1.02);
-  }
+.mono-eyebrow {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 300;
+  color: #71717a;
 }
 
-.animate-pulse-slow {
-  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.mono-meta {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 300;
+  color: #a1a1aa;
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
+/* Custom hairline scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(24, 24, 27, 0.5);
-  border-radius: 9999px;
+  background: #0a0a0a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
 }
 
-.word-pill {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  user-select: none;
-}
-
-.word-pill:hover {
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.4);
+/* Reduced motion overrides */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

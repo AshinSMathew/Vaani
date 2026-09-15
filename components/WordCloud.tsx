@@ -7,9 +7,7 @@ import {
   RotateCcw,
   ListOrdered,
   LayoutGrid,
-  Info,
   RefreshCw,
-  Sparkles,
   Palette,
   Check,
 } from "lucide-react";
@@ -34,14 +32,14 @@ const TEMPLATES: TemplateOption[] = [
   {
     id: "neon-cyan",
     name: "Neon Cyan",
-    tagline: "Electric cyan & white on black",
+    tagline: "Electric cyan on dark ground",
     image: "/NeonCyan.png",
     themeBadge: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
   },
   {
     id: "midnight-gold",
     name: "Midnight Gold",
-    tagline: "Golden hero & warm ember",
+    tagline: "Golden hero & amber spectrum",
     image: "/MidnightOrange.png",
     themeBadge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
   },
@@ -55,7 +53,7 @@ const TEMPLATES: TemplateOption[] = [
   {
     id: "editorial-orange",
     name: "Editorial Orange",
-    tagline: "Terracotta & amber on white",
+    tagline: "Terracotta & warm amber",
     image: "/EditorialOrange.png",
     themeBadge: "bg-orange-500/20 text-orange-300 border-orange-500/30",
   },
@@ -115,121 +113,126 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     <div className="w-full flex flex-col items-center">
       <WordModal keyword={activeWord} onClose={() => setActiveWord(null)} />
 
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono font-medium text-zinc-400">
-            {keywords.length} extracted semantic keywords & phrases
+      {/* Top Action & View Switcher Bar */}
+      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-white/8 mb-6">
+        <div className="flex items-center gap-3">
+          <span className="mono-eyebrow text-[#6366F1]">
+            04 · VISUALIZATION MATRIX
+          </span>
+          <span className="text-zinc-600 font-mono text-[10px]">//</span>
+          <span className="mono-meta">
+            {keywords.length} SEMANTIC VECTORS
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center p-1 bg-zinc-900 rounded-xl border border-white/10">
+          {/* Mode Switcher */}
+          <div className="flex items-center gap-px bg-white/8 p-px">
             <button
               onClick={() => setViewMode("cloud")}
               aria-label="Word cloud view"
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === "cloud" ? "bg-indigo-600 text-white" : "text-zinc-400 hover:text-zinc-200"
+              className={`px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors cursor-pointer ${
+                viewMode === "cloud"
+                  ? "bg-[#6366F1] text-white font-medium"
+                  : "bg-[#0F0F11] text-zinc-400 hover:text-white"
               }`}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
+              <span>CLOUD</span>
             </button>
             <button
               onClick={() => setViewMode("ranked")}
               aria-label="Ranked list view"
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === "ranked" ? "bg-indigo-600 text-white" : "text-zinc-400 hover:text-zinc-200"
+              className={`px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors cursor-pointer ${
+                viewMode === "ranked"
+                  ? "bg-[#6366F1] text-white font-medium"
+                  : "bg-[#0F0F11] text-zinc-400 hover:text-white"
               }`}
             >
-              <ListOrdered className="w-4 h-4" />
+              <ListOrdered className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />
+              <span>LIST</span>
             </button>
           </div>
 
           {viewMode === "cloud" && (
             <button
               onClick={() => setCloudSeed((s) => s + 1)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
-              title="Shuffle layout arrangement"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-300 bg-[#0F0F11] hover:bg-[#18181B] hover:text-white border border-white/8 transition-colors cursor-pointer"
+              title="Shuffle layout coordinates"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Shuffle</span>
+              <RefreshCw className="w-3 h-3" />
+              <span className="hidden sm:inline">SHUFFLE</span>
             </button>
           )}
 
           <button
             onClick={handleExportPng}
             disabled={isExporting}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 font-mono text-[10px] uppercase tracking-wider text-white bg-[#6366F1] hover:bg-[#4338CA] transition-colors cursor-pointer disabled:opacity-50 font-medium"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>{isExporting ? "Exporting..." : "Download PNG"}</span>
+            <span>{isExporting ? "EXPORTING..." : "EXPORT 2X PNG"}</span>
           </button>
 
           <button
             onClick={onReset}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium text-zinc-300 bg-zinc-900 hover:bg-zinc-800 border border-white/10 hover:border-white/20 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-400 hover:text-white bg-[#0F0F11] hover:bg-[#18181B] border border-white/8 transition-colors cursor-pointer"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="hidden sm:inline">Analyze another</span>
+            <RotateCcw className="w-3 h-3" />
+            <span className="hidden sm:inline">RESET</span>
           </button>
         </div>
       </div>
 
-      <div className="w-full mb-8">
-        <div className="flex items-center justify-between mb-3 px-1">
+      {/* 4-Template Selection Strip */}
+      <div className="w-full mb-6">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Palette className="w-4 h-4 text-indigo-400" />
-            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300">
-              Select Design Template
-            </h3>
+            <Palette className="w-3.5 h-3.5 text-[#6366F1]" />
+            <span className="mono-eyebrow text-zinc-300">
+              ENGINE THEME TEMPLATES
+            </span>
           </div>
-          <span className="text-[11px] font-mono text-zinc-500">
-            Click template to apply style
+          <span className="mono-eyebrow text-[10px] text-zinc-500">
+            [ SELECT TO RE-RENDER ]
           </span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/8 border border-white/8">
           {TEMPLATES.map((tmpl) => {
             const isSelected = selectedTemplate === tmpl.id;
             return (
               <button
                 key={tmpl.id}
                 onClick={() => setSelectedTemplate(tmpl.id)}
-                className={`relative rounded-2xl p-2.5 text-left transition-all duration-300 cursor-pointer border flex flex-col justify-between overflow-hidden group ${
+                className={`p-3 text-left transition-colors cursor-pointer flex flex-col justify-between ${
                   isSelected
-                    ? "bg-zinc-900/90 border-indigo-500 shadow-xl shadow-indigo-500/25 ring-2 ring-indigo-500/50 scale-[1.02]"
-                    : "bg-zinc-950/80 border-white/10 hover:border-white/25 hover:bg-zinc-900/60 hover:scale-[1.01]"
+                    ? "bg-[#18181B] border-t-2 border-t-[#6366F1]"
+                    : "bg-[#0F0F11] hover:bg-[#141416]"
                 }`}
               >
-                <div className="relative w-full aspect-16/10 rounded-xl overflow-hidden mb-3 bg-zinc-900 border border-white/10 shadow-inner">
+                <div className="relative w-full aspect-16/10 overflow-hidden mb-2.5 bg-[#0A0A0A] border border-white/6">
                   <Image
                     src={tmpl.image}
                     alt={tmpl.name}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="object-cover"
                   />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
-
                   {isSelected && (
-                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg ring-2 ring-white/20 animate-in zoom-in-50 duration-200">
-                      <Check className="w-3.5 h-3.5 stroke-3" />
+                    <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-[#6366F1] text-white flex items-center justify-center">
+                      <Check className="w-3 h-3" />
                     </div>
                   )}
+                </div>
 
-                  <div className="absolute bottom-2 left-2">
-                    <span
-                      className={`text-[9px] font-mono font-semibold uppercase px-2 py-0.5 rounded-md border backdrop-blur-md ${tmpl.themeBadge}`}
-                    >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs font-medium ${isSelected ? "text-white" : "text-zinc-300"}`}>
                       {tmpl.name}
                     </span>
                   </div>
-                </div>
-
-                <div className="px-1 pb-1">
-                  <h4 className="text-sm font-bold text-zinc-100 group-hover:text-white flex items-center justify-between">
-                    <span>{tmpl.name}</span>
-                  </h4>
-                  <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">
+                  <p className="font-mono text-[9px] text-zinc-500 truncate mt-0.5">
                     {tmpl.tagline}
                   </p>
                 </div>
@@ -239,35 +242,25 @@ export const WordCloud: React.FC<WordCloudProps> = ({
         </div>
       </div>
 
-      <div className="w-full glass-panel-glow rounded-3xl border border-indigo-500/20 shadow-2xl relative overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-purple-600/10 blur-3xl pointer-events-none" />
-
-        <div className="flex items-center justify-between border-b border-white/10 p-6 sm:px-10 sm:pt-8 sm:pb-5">
+      {/* Word Cloud Canvas & Matrix Display */}
+      <div className="w-full hairline-panel border border-white/8">
+        <div className="flex items-center justify-between border-b border-white/8 p-4 sm:px-6">
           <div>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-indigo-400 block mb-1">
-              <Sparkles className="w-3 h-3 inline-block mr-1 -mt-0.5" />
-              AI Semantic Word Cloud
+            <span className="mono-eyebrow text-[#6366F1] block mb-0.5">
+              ACTIVE CANVAS ENGINE
             </span>
-            <h2 className="text-xl sm:text-2xl font-black text-zinc-100 tracking-tight flex items-center gap-2">
-              <span>{TEMPLATES.find((t) => t.id === selectedTemplate)?.name}</span>
-              <span className="text-xs font-mono font-normal text-zinc-400 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
-                Template
-              </span>
+            <h2 className="text-lg font-light text-white tracking-tight">
+              {TEMPLATES.find((t) => t.id === selectedTemplate)?.name}
             </h2>
           </div>
-          <div className="text-right">
-            <span className="text-xs font-mono font-medium text-zinc-300">
-              {keywords.length} topics & phrases
-            </span>
-            <span className="text-[10px] text-zinc-500 block font-mono">
-              {metadata.audioProcessingMethod} · Saaras v4
-            </span>
+          <div className="text-right font-mono text-[10px] text-zinc-400">
+            <div>{placedCount} / {keywords.length} VECTORS PLACED</div>
+            <div className="text-zinc-600 uppercase">ZERO-COLLISION LAYOUT</div>
           </div>
         </div>
 
         {viewMode === "cloud" && (
-          <div className="p-4 sm:p-6">
+          <div className="p-4 sm:p-6 bg-[#0A0A0A]">
             {selectedTemplate === "neon-cyan" && (
               <TemplateNeonCyan
                 ref={activeTemplateRef}
@@ -308,53 +301,46 @@ export const WordCloud: React.FC<WordCloudProps> = ({
               />
             )}
 
-            <div className="flex flex-col sm:flex-row items-center justify-between mt-3 text-[11px] text-zinc-500 gap-2 px-1">
-              <span>{placedCount} terms placed with zero overlap · Click any word on cloud to inspect</span>
-              <span className="font-mono">High-DPI 2x Lossless PNG Export</span>
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-4 pt-3 border-t border-white/6 font-mono text-[10px] text-zinc-500 gap-2">
+              <span>INTERACTION: CLICK ANY TERM TO INSPECT SEMANTIC METRICS</span>
+              <span>OUTPUT: 2X LOSSLESS VECTOR RENDER</span>
             </div>
           </div>
         )}
 
         {viewMode === "ranked" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-6 sm:p-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/8 p-px">
             {keywords.map((kw, index) => (
               <div
                 key={kw.id}
                 onClick={() => handleSelectWord(kw)}
-                className="p-4 rounded-xl bg-zinc-900/70 border border-white/5 hover:border-indigo-500/40 transition-all cursor-pointer flex items-center justify-between group"
+                className="p-4 bg-[#0F0F11] hover:bg-[#18181B] transition-colors cursor-pointer flex items-center justify-between"
               >
                 <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="w-6 text-xs font-mono font-bold text-zinc-500">
-                    #{index + 1}
+                  <span className="font-mono text-[11px] text-zinc-600">
+                    #{String(index + 1).padStart(2, "0")}
                   </span>
                   <div className="overflow-hidden">
-                    <h4 className="text-sm font-bold text-zinc-100 truncate group-hover:text-indigo-300">
+                    <h4 className="text-xs font-medium text-zinc-200 truncate">
                       {kw.term}
                     </h4>
+                    <span className="mono-eyebrow text-[9px] text-zinc-500">
+                      {kw.category}
+                    </span>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-sm font-bold font-mono text-indigo-400">
+                <div className="text-right shrink-0 font-mono">
+                  <span className="text-xs text-[#6366F1] font-medium">
                     {Math.round(kw.score * 100)}%
                   </span>
-                  <span className="text-[10px] text-zinc-500 block font-mono">
-                    {kw.count}x
+                  <span className="text-[10px] text-zinc-600 block">
+                    {kw.count}X
                   </span>
                 </div>
               </div>
             ))}
           </div>
         )}
-
-        <div className="px-6 sm:px-10 pb-6 pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-zinc-500">
-          <div className="flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Click any word to see semantic relevance scores and discussion context.</span>
-          </div>
-          <span className="font-mono text-[11px]">
-            vaani.+ · Sarvam Saaras v4
-          </span>
-        </div>
       </div>
     </div>
   );

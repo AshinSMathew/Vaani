@@ -278,7 +278,7 @@ export const TemplateNeonCyan = forwardRef<TemplateRef, TemplateNeonCyanProps>((
           title="Click any word to inspect meaning and context"
         />
         {isRendering && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/75 backdrop-blur-xs text-cyan-400">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/75 backdrop-blur-sm text-cyan-400">
             <div className="flex items-center gap-2.5 text-sm font-semibold tracking-wide uppercase">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
               Rendering Neon Cyan Template...

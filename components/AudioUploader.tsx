@@ -99,49 +99,43 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={triggerFileInput}
-        className={`w-full relative rounded-2xl border-2 border-dashed p-8 sm:p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${
+        className={`w-full relative border border-dashed p-8 sm:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
           isDragging
-            ? "border-indigo-500 bg-indigo-500/10 scale-[1.01]"
-            : "border-white/10 hover:border-indigo-500/50 bg-zinc-950/40 hover:bg-zinc-900/40"
+            ? "border-[#6366F1] bg-[#6366F1]/10"
+            : "border-white/12 hover:border-white/25 bg-[#0A0A0A]"
         }`}
       >
-        <div
-          className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-transform duration-200 ${
-            isDragging
-              ? "bg-indigo-600 text-white scale-110 shadow-lg shadow-indigo-600/30"
-              : "bg-zinc-900 border border-white/10 text-indigo-400 group-hover:text-indigo-300"
-          }`}
-        >
-          <UploadCloud className="w-8 h-8" />
+        <div className="w-12 h-12 bg-[#18181B] border border-white/8 flex items-center justify-center mb-4 text-[#6366F1]">
+          <UploadCloud className="w-6 h-6" />
         </div>
 
-        <h3 className="text-base font-semibold text-zinc-100 mb-1">
-          {isDragging ? "Drop your recording right here" : "Drop your recording here"}
+        <h3 className="text-lg font-light text-white tracking-tight mb-1">
+          {isDragging ? "Drop audio container here" : "Select or Drop Audio File"}
         </h3>
-        <p className="text-xs text-zinc-400 max-w-sm mb-4">
-          or <span className="text-indigo-400 underline underline-offset-2 font-medium">click to browse</span> from your computer
+        <p className="text-xs text-zinc-400 max-w-sm mb-6 font-sans">
+          Click to browse your local filesystem or drag raw audio recordings.
         </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-xs mb-4">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-md mb-6">
           {["MP3", "WAV", "M4A", "AAC", "OGG", "WEBM", "FLAC"].map((fmt) => (
             <span
               key={fmt}
-              className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-white/5"
+              className="mono-eyebrow text-[10px] px-2 py-0.5 bg-[#18181B] text-zinc-400 border border-white/6"
             >
               {fmt}
             </span>
           ))}
         </div>
 
-        <div className="text-[11px] text-zinc-500 font-mono">
-          Max 25 MB · Max 10 minutes
+        <div className="mono-eyebrow text-[10px] text-zinc-500">
+          MAX PAYLOAD 25 MB · MAX DURATION 10 MINUTES
         </div>
 
         {isValidating && (
-          <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-xs rounded-2xl flex items-center justify-center">
-            <div className="flex items-center gap-2 text-xs text-indigo-400 font-medium">
-              <span className="w-3.5 h-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-              <span>Validating audio stream...</span>
+          <div className="absolute inset-0 bg-[#0A0A0A]/90 backdrop-blur-sm flex items-center justify-center">
+            <div className="flex items-center gap-3 font-mono text-[11px] text-[#6366F1] uppercase tracking-wider">
+              <span className="w-3 h-3 border border-[#6366F1] border-t-transparent animate-spin" />
+              <span>VALIDATING AUDIO BINARY HEADERS...</span>
             </div>
           </div>
         )}

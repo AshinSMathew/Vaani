@@ -278,7 +278,7 @@ export const TemplateSlateTeal = forwardRef<TemplateRef, TemplateSlateTealProps>
           title="Click any word to inspect meaning and context"
         />
         {isRendering && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#5c6e7a]/85 backdrop-blur-xs text-white">
+          <div className="absolute inset-0 flex items-center justify-center bg-[#5c6e7a]/85 backdrop-blur-sm text-white">
             <div className="flex items-center gap-2.5 text-sm font-semibold tracking-wide uppercase">
               <span className="w-2 h-2 rounded-full bg-white animate-ping" />
               Rendering Slate Corporate Template...

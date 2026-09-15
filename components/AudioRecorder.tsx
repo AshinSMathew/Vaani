@@ -91,8 +91,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         }
 
         drawAudioVisualizer(canvasRef.current, dataArray, {
-          barColor: "#818cf8",
-          glowColor: "rgba(129, 140, 248, 0.4)",
+          barColor: "#6366F1",
+          glowColor: "rgba(99, 102, 241, 0.4)",
           barWidth: 4,
           barGap: 3,
         });
@@ -138,7 +138,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
           onError({
             type: "MIC_DENIED",
             title: "Microphone access is blocked",
-            message: "vaani.+ needs microphone access to record your session.",
+            message: "vaani needs microphone access to record your session.",
             suggestion: "Allow microphone access in your browser site permissions and try again.",
             retryable: true,
             actionLabel: "Try again",
@@ -246,56 +246,53 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   return (
     <div className="w-full flex flex-col items-center">
       {!isRecording ? (
-        <div className="flex flex-col items-center text-center p-6 sm:p-8 w-full">
+        <div className="flex flex-col items-center text-center p-8 sm:p-12 w-full">
           <button
             onClick={startRecording}
             disabled={isProcessing}
             aria-label="Start recording audio session"
-            className="group relative w-20 h-20 rounded-full bg-linear-to-tr from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 p-1 flex items-center justify-center shadow-xl shadow-indigo-600/30 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mb-5"
+            className="w-16 h-16 bg-[#6366F1] hover:bg-[#4338CA] text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer mb-6"
           >
-            <div className="w-full h-full rounded-full bg-zinc-950/40 backdrop-blur-xs flex items-center justify-center border border-white/20 group-hover:bg-transparent transition-all">
-              <Mic className="w-8 h-8 text-white transition-transform group-hover:scale-110" />
-            </div>
-            <span className="absolute -inset-1 rounded-full bg-indigo-500/20 animate-ping pointer-events-none group-hover:opacity-100 opacity-50" />
+            <Mic className="w-6 h-6" />
           </button>
 
-          <h3 className="text-base font-semibold text-zinc-100 mb-1">
-            Record your session
+          <h3 className="text-xl font-light text-white tracking-tight mb-2">
+            Record Audio Stream
           </h3>
-          <p className="text-xs text-zinc-400 max-w-xs mb-3">
-            Click to record your conversation directly from your browser microphone.
+          <p className="text-xs text-zinc-400 max-w-sm mb-4 font-sans leading-relaxed">
+            Direct high-fidelity capture from your browser microphone. Transcribed via Sarvam Saaras v4 acoustic models.
           </p>
-          <div className="text-[11px] text-zinc-500 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span>High-fidelity audio · Max 10 min (600s)</span>
+          <div className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-emerald-400" />
+            <span>PCM 44.1 KHZ · 10 MIN MAX LIMIT</span>
           </div>
         </div>
       ) : (
-        <div className="w-full flex flex-col items-center p-6 sm:p-8">
-          <div className="flex items-center gap-2 mb-4 bg-rose-500/10 border border-rose-500/20 px-3.5 py-1.5 rounded-full">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-            <span className="text-xs font-semibold tracking-wider uppercase text-rose-400">
-              Live Recording
+        <div className="w-full flex flex-col items-center p-6 sm:p-10">
+          <div className="flex items-center gap-2 mb-4 bg-rose-500/10 border border-rose-500/20 px-3 py-1">
+            <span className="w-2 h-2 bg-rose-500 animate-pulse" />
+            <span className="mono-eyebrow text-rose-400">
+              STREAM RECORDING ACTIVE
             </span>
           </div>
 
-          <div className="text-4xl sm:text-5xl font-mono font-bold tracking-tight text-zinc-100 mb-6">
+          <div className="text-4xl sm:text-6xl font-mono font-light tracking-tight text-white mb-6">
             {formatDuration(elapsedSeconds)}
           </div>
 
-          <div className="w-full max-w-md h-20 bg-zinc-950/80 rounded-2xl border border-white/10 p-3 mb-6 flex items-center justify-center overflow-hidden shadow-inner">
+          <div className="w-full max-w-lg h-24 bg-[#0A0A0A] border border-white/8 p-3 mb-6 flex items-center justify-center overflow-hidden">
             <canvas
               ref={canvasRef}
-              width={400}
-              height={70}
-              className="w-full h-full"
+              width={480}
+              height={80}
+              className="w-full h-full block"
             />
           </div>
 
-          <div className="flex items-center gap-2 text-xs mb-6 text-zinc-400">
-            <Volume2 className={`w-4 h-4 ${audioDetected ? "text-emerald-400" : "text-zinc-600"}`} />
+          <div className="flex items-center gap-2 font-mono text-[11px] mb-8 text-zinc-400">
+            <Volume2 className={`w-3.5 h-3.5 ${audioDetected ? "text-emerald-400" : "text-zinc-600"}`} />
             <span>
-              {audioDetected ? "Audio signal detected" : "Listening for speech..."}
+              {audioDetected ? "AUDIO SIGNAL CAPTURED" : "WAITING FOR SPEECH INPUT..."}
             </span>
           </div>
 
@@ -303,19 +300,19 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             <button
               onClick={cancelRecording}
               aria-label="Discard recording"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-zinc-200 bg-zinc-900/80 hover:bg-zinc-800 border border-white/10 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 font-mono text-[11px] uppercase tracking-widest text-zinc-400 hover:text-white bg-[#0A0A0A] hover:bg-[#18181B] border border-white/8 transition-colors cursor-pointer"
             >
-              <Trash2 className="w-4 h-4 text-zinc-500" />
-              <span>Discard</span>
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>DISCARD</span>
             </button>
 
             <button
               onClick={stopRecording}
               aria-label="Stop recording and review"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-2.5 font-mono text-[11px] uppercase tracking-widest text-white bg-rose-600 hover:bg-rose-700 transition-colors cursor-pointer"
             >
-              <Square className="w-4 h-4 fill-white" />
-              <span>Stop Recording</span>
+              <Square className="w-3.5 h-3.5 fill-white" />
+              <span>FINISH RECORDING</span>
             </button>
           </div>
         </div>

@@ -1,35 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import confetti from "canvas-confetti";
-import { Header } from "@/components/Header";
+import { useRouter } from "next/navigation";
 import { AudioInput } from "@/components/AudioInput";
 import { AudioPreview } from "@/components/AudioPreview";
 import { AnalysisProgress } from "@/components/AnalysisProgress";
-import { WordCloud } from "@/components/WordCloud";
-import { TranscriptPanel } from "@/components/TranscriptPanel";
 import { ErrorState } from "@/components/ErrorState";
+import { ShaderRibbons } from "@/components/ShaderRibbons";
 import { AppState, AppError, AnalysisResult } from "@/types";
+import { FileAudio } from "lucide-react";
 
 export default function Home() {
+  const router = useRouter();
   const [appState, setAppState] = useState<AppState>("idle");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioDuration, setAudioDuration] = useState<number>(0);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [appError, setAppError] = useState<AppError | null>(null);
-  const [highlightedKeyword, setHighlightedKeyword] = useState<string | null>(null);
-
-  const fireSuccessConfetti = () => {
-    try {
-      confetti({
-        particleCount: 40,
-        spread: 60,
-        origin: { y: 0.6 },
-        colors: ["#6366f1", "#a855f7", "#ec4899", "#10b981"],
-      });
-    } catch {
-    }
-  };
 
   const handleAudioReady = (file: File, duration: number) => {
     setAudioFile(file);
@@ -47,9 +33,7 @@ export default function Home() {
     setAppState("idle");
     setAudioFile(null);
     setAudioDuration(0);
-    setAnalysisResult(null);
     setAppError(null);
-    setHighlightedKeyword(null);
   };
 
   const handleRetry = () => {
@@ -96,9 +80,13 @@ export default function Home() {
       }
 
       const data: AnalysisResult = await response.json();
-      setAnalysisResult(data);
+      
+      // Store result, mark complete, and smoothly transition to /result
+      sessionStorage.setItem("vaani_analysis_result", JSON.stringify(data));
       setAppState("complete");
-      fireSuccessConfetti();
+      setTimeout(() => {
+        router.push("/result");
+      }, 400);
     } catch (err: unknown) {
       console.error("Analysis network error:", err);
       handleError({
@@ -164,27 +152,36 @@ export default function Home() {
   const isProcessing = ["uploading", "transcribing", "analyzing"].includes(appState);
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 selection:bg-indigo-500/30 selection:text-indigo-200">
-      <Header
-        onLoadSample={appState === "idle" ? handleLoadSample : undefined}
-        isProcessing={isProcessing}
-      />
+    <div className="min-h-screen relative flex flex-col justify-center bg-[#0A0A0A] text-white selection:bg-[#6366F1]/30 selection:text-indigo-200">
+      {/* WebGL Fragment Shader Additive Ribbons Background */}
+      <ShaderRibbons />
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col justify-center">
+      {/* Main Content Area */}
+      <main className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-20 flex flex-col justify-center">
         {appState === "idle" && (
-          <div className="flex flex-col items-center">
-            <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
-              <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-zinc-100 mb-3">
-                Turn audio into{" "}
-                <span className="bg-linear-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  visual insight.
-                </span>
+          <div className="w-full flex flex-col items-center text-center">
+            {/* VAANI Large Title & Slight Description */}
+            <div className="mb-10 sm:mb-12">
+              <h1 className="text-6xl sm:text-8xl md:text-9xl font-light tracking-tighter text-white uppercase mb-4">
+                VAANI<span className="text-[#6366F1]">.</span>
               </h1>
-              <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-lg mx-auto">
-                Record a conversation or upload a recording. Our Sarvam AI pipeline extracts the concepts and topics that mattered most.
+              <p className="text-sm sm:text-base text-zinc-400 font-sans max-w-md mx-auto leading-relaxed">
+                Transform conversational audio into semantic word clouds and topic insights.
               </p>
+
+              <div className="mt-4">
+                <button
+                  onClick={handleLoadSample}
+                  disabled={isProcessing}
+                  className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-widest text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <FileAudio className="w-3.5 h-3.5 text-[#6366F1]" />
+                  <span>OR TRY WITH SAMPLE AUDIO</span>
+                </button>
+              </div>
             </div>
 
+            {/* Audio Ingest: Upload and Record Audio */}
             <AudioInput
               onAudioReady={handleAudioReady}
               onError={handleError}
@@ -194,16 +191,7 @@ export default function Home() {
         )}
 
         {appState === "preview" && audioFile && (
-          <div className="flex flex-col items-center">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-zinc-100 mb-1">
-                Review Your Recording
-              </h2>
-              <p className="text-xs text-zinc-400">
-                Confirm your audio details before running Sarvam AI analysis.
-              </p>
-            </div>
-
+          <div className="w-full">
             <AudioPreview
               file={audioFile}
               duration={audioDuration}
@@ -215,49 +203,25 @@ export default function Home() {
         )}
 
         {isProcessing && (
-          <AnalysisProgress
-            state={appState}
-            filename={audioFile?.name}
-            duration={audioDuration}
-          />
-        )}
-
-        {appState === "complete" && analysisResult && (
-          <div className="w-full space-y-8 animate-in fade-in duration-300">
-            <WordCloud
-              result={analysisResult}
-              onReset={handleReset}
-              onWordClick={(term) => setHighlightedKeyword(term)}
+          <div className="w-full">
+            <AnalysisProgress
+              state={appState}
+              filename={audioFile?.name}
+              duration={audioDuration}
             />
-
-            <div className="w-full">
-              <TranscriptPanel
-                transcript={analysisResult.transcript}
-                language={analysisResult.language}
-                keywords={analysisResult.keywords}
-                highlightedKeyword={highlightedKeyword}
-              />
-            </div>
           </div>
         )}
 
         {appState === "error" && appError && (
-          <ErrorState
-            error={appError}
-            onRetry={handleRetry}
-            onReset={handleReset}
-          />
+          <div className="w-full">
+            <ErrorState
+              error={appError}
+              onRetry={handleRetry}
+              onReset={handleReset}
+            />
+          </div>
         )}
       </main>
-
-      <footer className="w-full border-t border-white/5 py-6 text-center text-xs text-zinc-600">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>vaani.+ &copy; {new Date().getFullYear()} · All rights reserved</span>
-          <span className="font-mono text-[11px] text-zinc-500">
-            Audio → Sarvam Saaras v4 → Semantic Intelligence → Word Cloud
-          </span>
-        </div>
-      </footer>
     </div>
   );
 }

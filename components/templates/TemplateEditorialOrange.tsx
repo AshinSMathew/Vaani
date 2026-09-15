@@ -278,7 +278,7 @@ export const TemplateEditorialOrange = forwardRef<TemplateRef, TemplateEditorial
           title="Click any word to inspect meaning and context"
         />
         {isRendering && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/85 backdrop-blur-xs text-orange-600">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/85 backdrop-blur-sm text-orange-600">
             <div className="flex items-center gap-2.5 text-sm font-semibold tracking-wide uppercase">
               <span className="w-2 h-2 rounded-full bg-orange-600 animate-ping" />
               Rendering Editorial Orange Template...

@@ -190,7 +190,7 @@ export default function Home() {
             <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
               <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-zinc-100 mb-3">
                 Turn audio into{" "}
-                <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                   visual insight.
                 </span>
               </h1>

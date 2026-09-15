@@ -1,5 +1,6 @@
 import { RawExtractedTerm } from "../analysis/scoring";
 import { extractFallbackKeywords } from "../analysis/fallback";
+import { isMeaningfulTerm } from "../analysis/normalize";
 
 const SARVAM_BASE_URL = "https://api.sarvam.ai";
 
@@ -292,7 +293,8 @@ export async function transcribeBatchAudio(
 }
 
 /**
- * Uses Sarvam Chat Completion API to perform structured semantic analysis on the transcript.
+ * Uses Sarvam Chat Completion API to perform structured semantic analysis on the transcript,
+ * extracting rich domain keyphrases, concepts, synthesized insights, and important keywords.
  */
 export async function extractKeywordsWithSarvamChat(
   transcript: string
@@ -302,37 +304,26 @@ export async function extractKeywordsWithSarvamChat(
     return extractFallbackKeywords(transcript);
   }
 
-  const prompt = `You are an expert conversational and educational AI analyzer.
-Analyze the following transcript from a mentoring, technical, or educational conversation.
-Extract AS MANY keywords, phrases, topics, concepts, skills, projects, technologies, goals, and themes as possible.
+  const prompt = `You are an expert AI semantic and conversational analyzer.
+Analyze the following transcript from an audio recording, video, or discussion.
+Extract and synthesize a rich, comprehensive collection of 30 to 50 high-impact keywords, key phrases, concepts, themes, domain terms, and meaningful summary takeaways that capture the FULL MEANING and depth of the discussion.
 
-CRITICAL: Extract at least 30-60 keywords. Include both single words AND multi-word phrases. Include:
-- Every technology, framework, library, language, tool mentioned
-- Every concept, methodology, or approach discussed
-- Every skill or competency referenced
-- Every project, product, or application mentioned
-- Every goal, objective, or aspiration discussed
-- Every theme or general topic area covered
-- Important verbs like "deploy", "optimize", "debug", "refactor"
-- Domain-specific terms even if mentioned briefly
-- Adjectives and descriptors that carry meaning (e.g. "scalable", "real-time", "production-grade")
-
-Rules:
-1. Do NOT return filler words, greetings (hello, hi), generic verbs (talking, discussed), pronouns, or common conversational words.
-2. Merge obvious singular/plural and case variants (e.g., "projects" -> "Project", "python" -> "Python").
-3. Preserve technical terms, acronyms, and proper nouns (e.g., "AWS", "Python", "React", "PostgreSQL", "CI/CD", "Docker").
-4. Assign each keyword a category: "technology" | "project" | "skill" | "concept" | "goal" | "theme" | "general".
-5. Assign a relevance score between 0.60 and 0.99 indicating how central the word is to the discussion.
-6. Provide a 1-sentence explanation of why this word is meaningful to the session.
+CRITICAL GUIDELINES:
+1. You are explicitly authorized, free, and encouraged to construct high-quality phrases, conceptual terms, and synthesized summary phrases (e.g. "Legacy Monolith Migration", "Real-Time ML Inference", "Database Indexing Strategy", "Cloud Infrastructure Deployment", "Next.js Micro-Frontends", "Sub-Second Latency Optimization", "Automated CI/CD Pipeline", "Agile Sprint Delivery", "Clean Code Reviews", "Career Acceleration") that describe the exact essence, themes, and meaning of the audio, even if the exact wording was not spoken verbatim.
+2. Include both punchy single domain keywords ("PostgreSQL", "Next.js", "Docker", "AWS", "FastAPI", "TypeScript", "Latency", "Caching", "Microservices", "Scalability", "Refactoring") AND rich multi-word phrases and sentences ("Sub-Second Latency Optimization", "High Availability Architecture", "Continuous Quality Assurance").
+3. STRICT PROHIBITION: NEVER include conversational filler words, pronouns, generic auxiliary verbs, or noise words (NO "if", "what", "we", "you", "they", "this", "that", "today", "discussed", "talking", "like", "actually", "thing", "really", "some", "just", "want", "need").
+4. Categorize each term into: "technology" | "concept" | "project" | "skill" | "goal" | "theme".
+5. Assign a relevance score between 0.65 and 0.99 indicating how central the concept is to the meaning.
+6. Provide a concise 1-sentence explanation of why this concept is meaningful.
 
 Return ONLY a valid JSON object matching this schema:
 {
   "keywords": [
     {
-      "term": "Python",
-      "score": 0.95,
-      "category": "technology",
-      "explanation": "Discussed as the primary programming language for building projects and scripting."
+      "term": "Legacy Monolith Migration",
+      "category": "project",
+      "score": 0.96,
+      "explanation": "Key architectural initiative to decompose legacy monolithic systems into modern micro-frontends."
     }
   ]
 }
@@ -354,15 +345,15 @@ ${transcript.slice(0, 6000)}
         messages: [
           {
             role: "system",
-            content: "You are a specialized AI that outputs strictly valid JSON for semantic keyword analysis.",
+            content: "You are an AI that outputs strictly valid JSON containing rich semantic keywords, key phrases, and summary takeaways.",
           },
           {
             role: "user",
             content: prompt,
           },
         ],
-        temperature: 0.3,
-        max_tokens: 3000,
+        temperature: 0.25,
+        max_tokens: 3500,
       }),
     });
 
@@ -374,13 +365,44 @@ ${transcript.slice(0, 6000)}
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    // Parse JSON safely
+    // 1. Try direct JSON parsing
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      if (Array.isArray(parsed.keywords) && parsed.keywords.length > 0) {
-        return parsed.keywords;
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (Array.isArray(parsed.keywords) && parsed.keywords.length > 0) {
+          const validKeywords = parsed.keywords.filter(
+            (k: RawExtractedTerm) => k.term && isMeaningfulTerm(k.term)
+          );
+          if (validKeywords.length >= 10) {
+            return validKeywords;
+          }
+        }
+      } catch (parseErr) {
+        console.warn("JSON parse error in Sarvam response:", parseErr);
       }
+    }
+
+    // 2. Try line-by-line fallback extraction from LLM content
+    const lines = content.split("\n");
+    const extractedList: RawExtractedTerm[] = [];
+    for (const line of lines) {
+      const match = line.match(/^\d+[\.\)]\s*(?:\*\*)?([^*:\-(]+)(?:\*\*)?(?:\s*[-:]\s*(.*))?$/);
+      if (match) {
+        const term = match[1].trim();
+        if (isMeaningfulTerm(term)) {
+          extractedList.push({
+            term,
+            category: "concept",
+            score: 0.85,
+            explanation: match[2]?.trim() || `Extracted topic of key relevance to the conversation.`,
+          });
+        }
+      }
+    }
+
+    if (extractedList.length >= 10) {
+      return extractedList;
     }
 
     return extractFallbackKeywords(transcript);

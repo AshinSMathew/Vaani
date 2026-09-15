@@ -1,5 +1,5 @@
 import { KeywordItem, WordCategory } from "@/types";
-import { normalizeTerm } from "./normalize";
+import { normalizeTerm, isMeaningfulTerm } from "./normalize";
 
 export interface RawExtractedTerm {
   term: string;
@@ -92,9 +92,9 @@ export function processAndScoreKeywords(
   }>();
 
   for (const item of rawTerms) {
-    if (!item.term) continue;
+    if (!item.term || !isMeaningfulTerm(item.term)) continue;
     const normalized = normalizeTerm(item.term);
-    if (!normalized) continue;
+    if (!normalized || !isMeaningfulTerm(normalized)) continue;
 
     const normKey = normalized.toLowerCase();
     const existing = termMap.get(normKey);

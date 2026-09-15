@@ -1,116 +1,148 @@
 import { RawExtractedTerm } from "./scoring";
-import { STOP_WORDS, normalizeTerm, isMeaningfulTerm } from "./normalize";
+import { STOP_WORDS, normalizeTerm, isMeaningfulTerm, KNOWN_ACRONYMS } from "./normalize";
 
 /**
- * Robust NLP keyword extractor that acts as an intelligent fallback
- * if Sarvam API key is absent or in offline demo mode.
+ * Intelligent domain phrase and concept extractor that acts as a robust NLP fallback
+ * or booster, extracting meaningful keyphrases, concepts, and technical terms while
+ * strictly ignoring all conversational noise and filler words.
  */
 export function extractFallbackKeywords(transcript: string): RawExtractedTerm[] {
   if (!transcript || transcript.trim().length === 0) {
     return [];
   }
 
-  // Pre-categorized dictionary of domain keywords for mentoring/tech conversations
-  const techKeywords = new Set([
-    "python", "javascript", "typescript", "react", "nextjs", "next.js", "node", "nodejs",
-    "aws", "gcp", "azure", "docker", "kubernetes", "sql", "postgresql", "mongodb",
-    "redis", "graphql", "fastapi", "django", "flask", "git", "github", "api",
-    "rest", "html", "css", "tailwind", "frontend", "backend", "fullstack",
-    "cloud computing", "machine learning", "ai", "llm", "nlp", "database"
-  ]);
-
-  const skillKeywords = new Set([
-    "problem solving", "communication", "system design", "data structures",
-    "algorithms", "debugging", "testing", "architecture", "leadership",
-    "collaboration", "agile", "scrum", "code review", "optimization"
-  ]);
-
-  const projectKeywords = new Set([
-    "college project", "capstone project", "final year project", "side project",
-    "open source", "portfolio", "application", "website", "system", "dashboard",
-    "prototype", "deployment", "microservices"
-  ]);
-
-  const goalKeywords = new Set([
-    "internship", "career", "job preparation", "resume", "interview",
-    "placement", "hiring", "learning", "growth", "roadmap", "goals", "mentor"
-  ]);
-
-  const extracted: Map<string, { term: string; category: string; score: number; explanation: string }> = new Map();
-
   const lowerTranscript = transcript.toLowerCase();
+  const extracted: Map<string, RawExtractedTerm> = new Map();
 
-  // 1. Check for multi-word phrases first
-  const multiWordCandidates = [
-    "software engineering", "cloud computing", "full stack", "data structures",
-    "system design", "college project", "final year project", "job preparation",
-    "machine learning", "web development", "career planning", "resume building",
-    "mock interview", "code review", "open source"
+  // 1. Curated high-value multi-word domain phrases
+  const DOMAIN_PHRASES: Array<{ phrase: string; category: string; score: number; explanation: string }> = [
+    // Tech & Architecture
+    { phrase: "machine learning", category: "technology", score: 0.94, explanation: "AI and machine learning model design and training." },
+    { phrase: "deep learning", category: "technology", score: 0.93, explanation: "Neural network architectures and deep learning models." },
+    { phrase: "cloud computing", category: "technology", score: 0.92, explanation: "Distributed cloud infrastructure and services." },
+    { phrase: "cloud infrastructure", category: "technology", score: 0.93, explanation: "Scalable cloud hosting and orchestration." },
+    { phrase: "full stack", category: "technology", score: 0.91, explanation: "End-to-end frontend and backend system development." },
+    { phrase: "software engineering", category: "concept", score: 0.92, explanation: "Software architecture, design principles, and engineering practices." },
+    { phrase: "system design", category: "skill", score: 0.94, explanation: "Architectural modeling for high-scale, resilient systems." },
+    { phrase: "data structures", category: "skill", score: 0.90, explanation: "Fundamental data organization and algorithmic efficiency." },
+    { phrase: "database indexing", category: "technology", score: 0.91, explanation: "Optimizing database queries and query execution plans." },
+    { phrase: "microservices architecture", category: "technology", score: 0.93, explanation: "Decoupled service-oriented architectural patterns." },
+    { phrase: "ci/cd pipeline", category: "technology", score: 0.92, explanation: "Automated continuous integration and deployment pipelines." },
+    { phrase: "automated testing", category: "skill", score: 0.88, explanation: "Unit, integration, and end-to-end automated testing suites." },
+    { phrase: "clean code", category: "skill", score: 0.87, explanation: "Writing maintainable, readable, and well-structured code." },
+    { phrase: "code review", category: "skill", score: 0.86, explanation: "Peer code reviews and engineering quality assurance." },
+    { phrase: "agile sprint", category: "concept", score: 0.85, explanation: "Iterative development cycles and milestone planning." },
+    { phrase: "product roadmap", category: "project", score: 0.89, explanation: "Strategic feature roadmap and milestone prioritization." },
+    { phrase: "web development", category: "technology", score: 0.90, explanation: "Modern web application design and engineering." },
+    { phrase: "real-time processing", category: "technology", score: 0.91, explanation: "Low-latency streaming and real-time computation." },
+    { phrase: "api integration", category: "technology", score: 0.89, explanation: "RESTful and GraphQL service integration." },
+    { phrase: "user experience", category: "concept", score: 0.88, explanation: "User interface and interaction design optimization." },
+    { phrase: "performance optimization", category: "skill", score: 0.92, explanation: "Latency reduction, throughput tuning, and profiling." },
+    { phrase: "security compliance", category: "concept", score: 0.89, explanation: "Data security, encryption, and compliance best practices." },
+
+    // Career & Mentorship
+    { phrase: "career growth", category: "goal", score: 0.90, explanation: "Professional advancement and strategic career planning." },
+    { phrase: "job preparation", category: "goal", score: 0.91, explanation: "Interview preparation and industry readiness." },
+    { phrase: "mock interview", category: "skill", score: 0.88, explanation: "Technical and behavioral mock interview practice." },
+    { phrase: "resume building", category: "goal", score: 0.89, explanation: "Crafting impactful technical resumes and portfolios." },
+    { phrase: "open source", category: "project", score: 0.88, explanation: "Open source community contributions and public codebases." },
+    { phrase: "capstone project", category: "project", score: 0.92, explanation: "Comprehensive end-to-end milestone project." },
+    { phrase: "team collaboration", category: "theme", score: 0.86, explanation: "Cross-functional communication and collaborative workflows." },
+    { phrase: "problem solving", category: "skill", score: 0.89, explanation: "Analytical thinking and structured problem resolution." },
   ];
 
-  for (const phrase of multiWordCandidates) {
-    if (lowerTranscript.includes(phrase)) {
-      const normalized = normalizeTerm(phrase);
+  for (const item of DOMAIN_PHRASES) {
+    if (lowerTranscript.includes(item.phrase)) {
+      const normalized = normalizeTerm(item.phrase);
       extracted.set(normalized.toLowerCase(), {
         term: normalized,
-        category: phrase.includes("project") ? "project" : phrase.includes("interview") || phrase.includes("career") || phrase.includes("resume") ? "goal" : "concept",
-        score: 0.92,
-        explanation: `Identified as a major thematic pillar discussed during the conversation.`,
+        category: item.category,
+        score: item.score,
+        explanation: item.explanation,
       });
     }
   }
 
-  // 2. Tokenize into words and compute term frequencies
-  const words = transcript
-    .replace(/[^a-zA-Z0-9_\-#+.]/g, " ")
-    .split(/\s+/)
-    .map((w) => w.trim())
-    .filter(Boolean);
+  // 2. Curated Single-Word Technical & Domain Dictionaries
+  const TECH_TERMS: Record<string, { cat: string; exp: string }> = {
+    "python": { cat: "technology", exp: "Core programming language utilized for application logic and scripting." },
+    "javascript": { cat: "technology", exp: "Primary scripting language powering dynamic web interactions." },
+    "typescript": { cat: "technology", exp: "Type-safe superset of JavaScript enhancing maintainability." },
+    "react": { cat: "technology", exp: "Component-driven frontend UI library." },
+    "nextjs": { cat: "technology", exp: "Modern full-stack React framework with server-side rendering." },
+    "next.js": { cat: "technology", exp: "Modern full-stack React framework with server-side rendering." },
+    "node": { cat: "technology", exp: "Server-side JavaScript runtime environment." },
+    "nodejs": { cat: "technology", exp: "Server-side JavaScript runtime environment." },
+    "aws": { cat: "technology", exp: "Amazon Web Services cloud computing platform." },
+    "docker": { cat: "technology", exp: "Containerization platform for reliable application deployment." },
+    "kubernetes": { cat: "technology", exp: "Container orchestration platform for automated scaling." },
+    "postgresql": { cat: "technology", exp: "Advanced open-source relational database." },
+    "postgres": { cat: "technology", exp: "Advanced open-source relational database." },
+    "mongodb": { cat: "technology", exp: "NoSQL document database for scalable data storage." },
+    "redis": { cat: "technology", exp: "In-memory caching and high-speed data store." },
+    "graphql": { cat: "technology", exp: "Flexible query language and runtime for APIs." },
+    "fastapi": { cat: "technology", exp: "High-performance Python API framework." },
+    "django": { cat: "technology", exp: "Full-featured Python web development framework." },
+    "flask": { cat: "technology", exp: "Lightweight Python micro-framework for web services." },
+    "git": { cat: "skill", exp: "Distributed version control system for collaborative coding." },
+    "github": { cat: "skill", exp: "Code hosting platform for version control and CI/CD." },
+    "tailwind": { cat: "technology", exp: "Utility-first CSS framework for modern UI styling." },
+    "sql": { cat: "technology", exp: "Structured Query Language for relational database operations." },
+    "nosql": { cat: "technology", exp: "Non-relational data modeling for flexible schemas." },
+    "microservices": { cat: "technology", exp: "Modular, independently deployable service architecture." },
+    "monolith": { cat: "concept", exp: "Single-tiered software application architecture." },
+    "frontend": { cat: "technology", exp: "Client-side presentation layer and user interface." },
+    "backend": { cat: "technology", exp: "Server-side architecture, business logic, and databases." },
+    "fullstack": { cat: "technology", exp: "Comprehensive frontend and backend engineering." },
+    "scalability": { cat: "concept", exp: "System capacity to handle growing workloads seamlessly." },
+    "latency": { cat: "concept", exp: "Response time and delay reduction across systems." },
+    "caching": { cat: "technology", exp: "Temporary high-speed data storage for performance." },
+    "refactoring": { cat: "skill", exp: "Restructuring code to improve maintainability without changing behavior." },
+    "deployment": { cat: "technology", exp: "Releasing software into production or staging environments." },
+    "architecture": { cat: "concept", exp: "High-level structural design of software systems." },
+    "algorithms": { cat: "skill", exp: "Step-by-step computational procedures and problem-solving." },
+    "internship": { cat: "goal", exp: "Practical industry experience and career entry point." },
+    "portfolio": { cat: "project", exp: "Showcase of accomplished projects and technical abilities." },
+    "mentorship": { cat: "theme", exp: "Guidance, coaching, and professional knowledge sharing." },
+    "roadmap": { cat: "goal", exp: "Strategic milestone timeline for technical and career objectives." },
+    "optimization": { cat: "skill", exp: "Enhancing execution speed, memory footprint, and efficiency." },
+  };
 
-  const freqMap = new Map<string, number>();
-  for (const word of words) {
-    const lower = word.toLowerCase();
-    if (isMeaningfulTerm(lower)) {
-      freqMap.set(lower, (freqMap.get(lower) || 0) + 1);
+  // 3. Scan transcript for recognized domain terms
+  for (const [termKey, info] of Object.entries(TECH_TERMS)) {
+    const regex = new RegExp(`\\b${termKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+    if (regex.test(transcript)) {
+      const normalized = normalizeTerm(termKey);
+      const normKey = normalized.toLowerCase();
+      if (!extracted.has(normKey)) {
+        extracted.set(normKey, {
+          term: normalized,
+          category: info.cat,
+          score: 0.88,
+          explanation: info.exp,
+        });
+      }
     }
   }
 
-  // 3. Classify and score terms
-  for (const [rawWord, count] of Array.from(freqMap.entries())) {
-    if (rawWord.length < 2 || STOP_WORDS.has(rawWord)) continue;
-
-    let category = "general";
-    let baseScore = 0.65;
-    let explanation = `Mentioned ${count} time(s) as a topic of interest.`;
-
-    if (techKeywords.has(rawWord)) {
-      category = "technology";
-      baseScore = 0.90;
-      explanation = `Recognized as a key technology or tool discussed in the session.`;
-    } else if (skillKeywords.has(rawWord)) {
-      category = "skill";
-      baseScore = 0.85;
-      explanation = `Core professional or technical skill emphasized.`;
-    } else if (projectKeywords.has(rawWord)) {
-      category = "project";
-      baseScore = 0.88;
-      explanation = `Direct reference to practical implementation and project work.`;
-    } else if (goalKeywords.has(rawWord)) {
-      category = "goal";
-      baseScore = 0.86;
-      explanation = `Strategic career objective or mentorship focus area.`;
-    }
-
-    const normalized = normalizeTerm(rawWord);
-    const normKey = normalized.toLowerCase();
-
-    if (!extracted.has(normKey)) {
-      extracted.set(normKey, {
-        term: normalized,
-        category,
-        score: Math.min(0.98, baseScore + (count > 2 ? 0.08 : count > 1 ? 0.04 : 0)),
-        explanation,
-      });
+  // 4. Extract capitalized domain noun phrases (e.g. "REST API", "Database Migration", "Cloud Storage")
+  const capitalizedPhrases = transcript.match(/\b([A-Z][a-zA-Z0-9_\-#+.]*(?:\s+[A-Z][a-zA-Z0-9_\-#+.]*){1,3})\b/g) || [];
+  for (const phrase of capitalizedPhrases) {
+    const trimmed = phrase.trim();
+    if (isMeaningfulTerm(trimmed)) {
+      const lower = trimmed.toLowerCase();
+      // Check if not made purely of stop words
+      const words = lower.split(/\s+/);
+      const meaningfulCount = words.filter(w => !STOP_WORDS.has(w)).length;
+      if (meaningfulCount >= 1 && !extracted.has(lower)) {
+        const normalized = normalizeTerm(trimmed);
+        extracted.set(normalized.toLowerCase(), {
+          term: normalized,
+          category: "concept",
+          score: 0.82,
+          explanation: `Pivotal concept highlighted during the conversation.`,
+        });
+      }
     }
   }
 

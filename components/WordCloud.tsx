@@ -10,6 +10,8 @@ import {
   Info,
   RefreshCw,
   Sparkles,
+  Sun,
+  Moon,
 } from "lucide-react";
 import cloud from "d3-cloud";
 import { KeywordItem, WordCategory, AnalysisResult } from "@/types";
@@ -22,16 +24,38 @@ interface WordCloudProps {
   onWordClick?: (term: string) => void;
 }
 
-// Curated color palette — warm earthy tones + accents like the reference image
-const PALETTE = [
-  "#c0652a", "#d4841f", "#b5651d", "#e8883a",  // warm oranges / browns
-  "#3a7d44", "#4e9a51", "#2d6a3f", "#5fb663",  // greens
-  "#7b4f8a", "#9b59b6", "#6c3d7a",              // purples
-  "#2e7d9c", "#3498db", "#1a6585",              // blues
-  "#c0392b", "#a93226",                          // reds
-  "#636e72", "#7f8c8d", "#4a5568",              // warm grays
-  "#d4a841", "#b8860b",                          // golds
+// Curated modern color palettes for light and dark canvas backgrounds
+const PALETTE_LIGHT = [
+  "#b8502a", // terracotta orange
+  "#1b7a42", // forest emerald
+  "#4338ca", // royal indigo
+  "#7c3aed", // deep violet
+  "#0e7490", // ocean teal
+  "#be123c", // crimson rose
+  "#b45309", // golden amber
+  "#334155", // slate
+  "#0284c7", // sky blue
+  "#15803d", // vibrant green
+  "#9333ea", // vivid purple
+  "#c2410c", // dark orange
 ];
+
+const PALETTE_DARK = [
+  "#38bdf8", // cyan
+  "#818cf8", // indigo
+  "#c084fc", // purple
+  "#fb7185", // rose
+  "#34d399", // emerald
+  "#fbbf24", // amber
+  "#60a5fa", // blue
+  "#a78bfa", // violet
+  "#2dd4bf", // teal
+  "#f472b6", // pink
+  "#4ade80", // lime green
+  "#f97316", // orange
+];
+
+const FONT_FAMILY = "'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 
 interface LayoutWord {
   text: string;
@@ -43,6 +67,7 @@ interface LayoutWord {
   weight: string;
   color: string;
   score: number;
+  category: WordCategory;
 }
 
 export const WordCloud: React.FC<WordCloudProps> = ({
@@ -56,6 +81,7 @@ export const WordCloud: React.FC<WordCloudProps> = ({
   const [viewMode, setViewMode] = useState<"cloud" | "ranked" | "categories">("cloud");
   const [cloudSeed, setCloudSeed] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [canvasTheme, setCanvasTheme] = useState<"light" | "dark">("light");
   const [layoutWords, setLayoutWords] = useState<LayoutWord[]>([]);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -82,28 +108,36 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     };
   }, []);
 
-  // Run d3-cloud layout and then paint onto canvas
-  const generateWordCloud = useCallback(() => {
+  // Run d3-cloud layout and paint onto high-DPI canvas
+  const generateWordCloud = useCallback(async () => {
     const container = containerRef.current;
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
 
+    // Ensure document fonts are fully loaded for accurate text metrics
+    if (typeof document !== "undefined" && document.fonts) {
+      try {
+        await document.fonts.ready;
+      } catch {
+        // Ignore font loading errors
+      }
+    }
+
     const uniqueKeywords = filteredKeywords;
     if (uniqueKeywords.length === 0) {
-      // Clear canvas
       const ctx = canvas.getContext("2d");
       if (ctx) {
         const w = container.clientWidth;
-        const h = 500;
+        const h = 480;
         canvas.width = w * 2;
         canvas.height = h * 2;
         canvas.style.width = `${w}px`;
         canvas.style.height = `${h}px`;
         ctx.scale(2, 2);
-        ctx.fillStyle = "#faf9f6";
+        ctx.fillStyle = canvasTheme === "light" ? "#faf9f6" : "#0c0d12";
         ctx.fillRect(0, 0, w, h);
-        ctx.fillStyle = "#999";
-        ctx.font = "15px 'Segoe UI', system-ui, sans-serif";
+        ctx.fillStyle = "#888";
+        ctx.font = `600 15px ${FONT_FAMILY}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText("No keywords found for selected category.", w / 2, h / 2);
@@ -114,54 +148,79 @@ export const WordCloud: React.FC<WordCloudProps> = ({
 
     setIsGenerating(true);
 
-    const width = container.clientWidth;
-    const height = Math.max(480, Math.min(640, width * 0.5));
+    const width = Math.max(320, container.clientWidth);
+    const height = Math.max(480, Math.min(620, Math.round(width * 0.52)));
 
-    // Font sizes — scale based on score
     const maxScore = uniqueKeywords[0]?.score || 1;
     const minScore = uniqueKeywords[uniqueKeywords.length - 1]?.score || 0;
     const range = maxScore - minScore || 1;
-    const minFont = Math.max(11, width / 75);
-    const maxFont = Math.max(44, Math.min(80, width / 12));
 
-    const rng = seededRandom(cloudSeed + 17);
+    const rng = seededRandom(cloudSeed + 23);
+    const palette = canvasTheme === "light" ? PALETTE_LIGHT : PALETTE_DARK;
 
-    // Assign colors deterministically
+    // Calculate adaptive font sizes based on whether item is multi-word or single-word
     const wordData = uniqueKeywords.map((kw) => {
       const normalized = (kw.score - minScore) / range;
-      const fontSize = minFont + normalized * (maxFont - minFont);
-      const colorIdx = Math.floor(rng() * PALETTE.length);
+      const isMultiWord = kw.term.includes(" ") || kw.term.length > 14;
+
+      let fontSize: number;
+      let rotation: number;
+
+      if (isMultiWord) {
+        // Multi-word phrases & sentences: 14px to 26px, strictly horizontal (0 deg)
+        const minPhraseFont = Math.max(13, width / 65);
+        const maxPhraseFont = Math.max(20, Math.min(26, width / 34));
+        fontSize = minPhraseFont + normalized * (maxPhraseFont - minPhraseFont);
+        rotation = 0; // Always horizontal for multi-word phrases for readability
+      } else {
+        // Single keywords: 18px to 48px, 75% horizontal, 25% vertical
+        const minSingleFont = Math.max(16, width / 55);
+        const maxSingleFont = Math.max(32, Math.min(50, width / 18));
+        fontSize = minSingleFont + normalized * (maxSingleFont - minSingleFont);
+        rotation = rng() < 0.75 ? 0 : 90;
+      }
+
+      const colorIdx = Math.floor(rng() * palette.length);
+
       return {
         text: kw.term,
-        size: fontSize,
+        size: Math.round(fontSize),
+        rotate: rotation,
         score: kw.score,
-        color: PALETTE[colorIdx],
+        category: kw.category,
+        color: palette[colorIdx],
       };
     });
 
-    // Use d3-cloud for layout computation
+    // Use d3-cloud layout engine with 5px padding to prevent overlap
     const layout = cloud()
       .size([width, height])
       .words(wordData.map((d) => ({ ...d })))
-      .padding(3)
-      .rotate(() => {
-        const r = rng();
-        // 65% horizontal, 35% vertical — like the reference
-        return r < 0.65 ? 0 : 90;
-      })
-      .font("'Georgia', 'Cambria', 'Times New Roman', serif")
+      .padding(5)
+      .rotate((d: { rotate?: number }) => d.rotate || 0)
+      .font(FONT_FAMILY)
       .fontWeight((d: { size?: number }) => {
-        const s = d.size || 20;
-        if (s > maxFont * 0.65) return "900";
-        if (s > maxFont * 0.4) return "700";
+        const s = d.size || 16;
+        if (s >= 32) return "800";
+        if (s >= 20) return "700";
         return "600";
       })
       .fontSize((d: { size?: number }) => d.size || 16)
       .spiral("archimedean")
       .random(rng)
-      .on("end", (words: Array<{ text?: string; size?: number; x?: number; y?: number; rotate?: number; font?: string; weight?: string; color?: string; score?: number }>) => {
-        // Paint the canvas
-        const scale = 2;
+      .on("end", (words: Array<{
+        text?: string;
+        size?: number;
+        x?: number;
+        y?: number;
+        rotate?: number;
+        font?: string;
+        weight?: string;
+        color?: string;
+        score?: number;
+        category?: WordCategory;
+      }>) => {
+        const scale = 2; // 2x Retina rendering
         canvas.width = width * scale;
         canvas.height = height * scale;
         canvas.style.width = `${width}px`;
@@ -171,10 +230,23 @@ export const WordCloud: React.FC<WordCloudProps> = ({
         if (!ctx) return;
 
         ctx.scale(scale, scale);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
 
-        // Background — warm off-white like the reference image
-        ctx.fillStyle = "#faf9f6";
+        // Background
+        ctx.fillStyle = canvasTheme === "light" ? "#faf9f6" : "#0c0d12";
         ctx.fillRect(0, 0, width, height);
+
+        // Subtle decorative background grid dots
+        ctx.fillStyle = canvasTheme === "light" ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.03)";
+        const dotGap = 24;
+        for (let x = 12; x < width; x += dotGap) {
+          for (let y = 12; y < height; y += dotGap) {
+            ctx.beginPath();
+            ctx.arc(x, y, 1, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
 
         const placed: LayoutWord[] = [];
 
@@ -182,18 +254,20 @@ export const WordCloud: React.FC<WordCloudProps> = ({
           if (!w.text || w.x === undefined || w.y === undefined) continue;
 
           const fontSize = w.size || 16;
-          const fontWeight = w.weight || "600";
-          const fontFamily = w.font || "'Georgia', serif";
+          const fontWeight = w.weight || "700";
+          const fontFamily = FONT_FAMILY;
           const rotation = w.rotate || 0;
-          const color = (w as { color?: string }).color || "#333";
+          const color = (w as { color?: string }).color || (canvasTheme === "light" ? "#1e293b" : "#f1f5f9");
 
           ctx.save();
           ctx.translate(width / 2 + w.x, height / 2 + w.y);
-          ctx.rotate((rotation * Math.PI) / 180);
+          if (rotation !== 0) {
+            ctx.rotate((rotation * Math.PI) / 180);
+          }
           ctx.fillStyle = color;
           ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
           ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
+          ctx.textBaseline = "alphabetic";
           ctx.fillText(w.text, 0, 0);
           ctx.restore();
 
@@ -207,6 +281,7 @@ export const WordCloud: React.FC<WordCloudProps> = ({
             weight: fontWeight,
             color,
             score: (w as { score?: number }).score || 0,
+            category: (w as { category?: WordCategory }).category || "general",
           });
         }
 
@@ -215,17 +290,52 @@ export const WordCloud: React.FC<WordCloudProps> = ({
       });
 
     layout.start();
-  }, [filteredKeywords, cloudSeed, seededRandom]);
+  }, [filteredKeywords, cloudSeed, canvasTheme, seededRandom]);
 
-  // Regenerate when view/filters/seed change
+  // Regenerate when view, category filter, theme, or seed changes
   useEffect(() => {
     if (viewMode === "cloud") {
-      const timer = setTimeout(() => generateWordCloud(), 80);
+      const timer = setTimeout(() => generateWordCloud(), 60);
       return () => clearTimeout(timer);
     }
-  }, [viewMode, selectedCategory, cloudSeed, generateWordCloud]);
+  }, [viewMode, selectedCategory, cloudSeed, canvasTheme, generateWordCloud]);
 
-  // Download PNG
+  // Handle click on canvas to inspect word
+  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas || layoutWords.length === 0) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left - rect.width / 2;
+    const clickY = event.clientY - rect.top - rect.height / 2;
+
+    // Find closest word to click
+    let closestWord: LayoutWord | null = null;
+    let minDistance = Infinity;
+
+    for (const w of layoutWords) {
+      const dx = clickX - w.x;
+      const dy = clickY - w.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const hitRadius = Math.max(20, w.size * 0.8 + (w.text.length * 4));
+
+      if (dist < hitRadius && dist < minDistance) {
+        minDistance = dist;
+        closestWord = w;
+      }
+    }
+
+    if (closestWord) {
+      const kw = keywords.find(
+        (k) => k.term.toLowerCase() === closestWord!.text.toLowerCase()
+      );
+      if (kw) {
+        handleSelectWord(kw);
+      }
+    }
+  };
+
+  // Download high-resolution PNG
   const handleExportPng = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -234,7 +344,8 @@ export const WordCloud: React.FC<WordCloudProps> = ({
     try {
       const dataUrl = canvas.toDataURL("image/png", 1.0);
       const link = document.createElement("a");
-      link.download = `vaani-wordcloud-${metadata.filename.replace(/\.[^/.]+$/, "") || "session"}.png`;
+      const baseName = metadata.filename.replace(/\.[^/.]+$/, "") || "session";
+      link.download = `vaani-wordcloud-${baseName}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -276,6 +387,22 @@ export const WordCloud: React.FC<WordCloudProps> = ({
 
         {/* Controls */}
         <div className="flex items-center gap-2">
+          {/* Canvas Theme Toggle */}
+          {viewMode === "cloud" && (
+            <button
+              onClick={() => setCanvasTheme((t) => (t === "light" ? "dark" : "light"))}
+              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-400 hover:text-zinc-200 transition-all cursor-pointer"
+              title={`Switch to ${canvasTheme === "light" ? "Dark" : "Light"} Canvas Theme`}
+            >
+              {canvasTheme === "light" ? (
+                <Moon className="w-3.5 h-3.5 text-zinc-300" />
+              ) : (
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
+              )}
+            </button>
+          )}
+
+          {/* View mode buttons */}
           <div className="flex items-center p-1 bg-zinc-900 rounded-xl border border-white/10">
             <button
               onClick={() => setViewMode("cloud")}
@@ -350,12 +477,12 @@ export const WordCloud: React.FC<WordCloudProps> = ({
               AI Semantic Analysis
             </span>
             <h2 className="text-xl sm:text-2xl font-black text-zinc-100 tracking-tight">
-              Word Cloud
+              Semantic Word Cloud
             </h2>
           </div>
           <div className="text-right">
-            <span className="text-xs font-mono font-medium text-zinc-400">
-              {filteredKeywords.length} unique topics
+            <span className="text-xs font-mono font-medium text-zinc-300">
+              {filteredKeywords.length} topics & phrases
             </span>
             <span className="text-[10px] text-zinc-500 block">
               {metadata.audioProcessingMethod} · Saaras v4
@@ -366,24 +493,35 @@ export const WordCloud: React.FC<WordCloudProps> = ({
         {/* Cloud View */}
         {viewMode === "cloud" && (
           <div ref={containerRef} className="p-4 sm:p-6">
-            <div className="relative rounded-2xl overflow-hidden bg-[#faf9f6] shadow-inner">
+            <div
+              className={`relative rounded-2xl overflow-hidden shadow-inner transition-colors duration-300 ${
+                canvasTheme === "light" ? "bg-[#faf9f6]" : "bg-[#0c0d12]"
+              }`}
+            >
               <canvas
                 ref={canvasRef}
-                className="w-full block"
-                style={{ minHeight: 420 }}
+                onClick={handleCanvasClick}
+                className="w-full block cursor-pointer"
+                style={{ minHeight: 440 }}
+                title="Click any word to inspect meaning and context"
               />
               {isGenerating && (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#faf9f6]/80">
-                  <div className="flex items-center gap-2 text-zinc-600 text-sm font-medium">
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Generating...
+                <div
+                  className={`absolute inset-0 flex items-center justify-center backdrop-blur-xs ${
+                    canvasTheme === "light" ? "bg-[#faf9f6]/80 text-zinc-700" : "bg-[#0c0d12]/80 text-zinc-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <RefreshCw className="w-4 h-4 animate-spin text-indigo-500" />
+                    Synthesizing Semantic Word Cloud...
                   </div>
                 </div>
               )}
             </div>
-            <p className="text-center text-[11px] text-zinc-500 mt-3">
-              {layoutWords.length} words placed · Click &ldquo;Download PNG&rdquo; to save as image
-            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-3 text-[11px] text-zinc-500 gap-2 px-1">
+              <span>{layoutWords.length} words & keyphrases placed · Click any word on canvas to inspect</span>
+              <span className="font-mono">High-DPI 2x Retina PNG Export</span>
+            </div>
           </div>
         )}
 
@@ -461,7 +599,7 @@ export const WordCloud: React.FC<WordCloudProps> = ({
         <div className="px-6 sm:px-10 pb-6 pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-zinc-500">
           <div className="flex items-center gap-1.5">
             <Info className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Switch to ranked or category view to inspect individual terms.</span>
+            <span>Click any word to see why it was chosen, relevance scores, and discussion context.</span>
           </div>
           <span className="font-mono text-[11px]">
             vaani.+ · Sarvam Saaras v4
